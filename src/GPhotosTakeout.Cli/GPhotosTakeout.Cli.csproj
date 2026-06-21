@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>GPhotosTakeout.Cli</RootNamespace>
+    <AssemblyName>gptakeout</AssemblyName>
+    <!-- NOTE: do NOT enable InvariantGlobalization — it disables the ICU timezone
+         database, which breaks GPS→IANA timezone resolution (core functionality). -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GPhotosTakeout.Core\GPhotosTakeout.Core.csproj" />
+  </ItemGroup>
+
+</Project>

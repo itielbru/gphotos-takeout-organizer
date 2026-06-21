@@ -24,6 +24,9 @@ jobs:
       - name: Build Core
         run: dotnet build src/GPhotosTakeout.Core/GPhotosTakeout.Core.csproj -c Release --no-restore
 
+      - name: Build CLI
+        run: dotnet build src/GPhotosTakeout.Cli/GPhotosTakeout.Cli.csproj -c Release
+
       - name: Test with coverage
         run: >
           dotnet test tests/GPhotosTakeout.Tests/GPhotosTakeout.Tests.csproj

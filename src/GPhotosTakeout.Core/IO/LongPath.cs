@@ -18,11 +18,14 @@ public static class LongPath
         if (path.StartsWith(@"\\?\", StringComparison.Ordinal))
             return path;
 
-        if (path.StartsWith(@"\\", StringComparison.Ordinal))
-            return @"\\?\UNC\" + path[2..];
+        // The OS uses "\\?\" paths verbatim — it does NOT translate '/' to '\'. So any
+        // forward slashes (common when a path comes from a CLI arg or config) must be
+        // normalized before we add the prefix, or the file appears to not exist.
+        if (path.StartsWith(@"\\", StringComparison.Ordinal) || path.StartsWith("//", StringComparison.Ordinal))
+            return @"\\?\UNC\" + path.Replace('/', '\\')[2..];
 
         if (Path.IsPathFullyQualified(path))
-            return @"\\?\" + path;
+            return @"\\?\" + path.Replace('/', '\\');
 
         return path;
     }
