@@ -72,12 +72,15 @@ dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Plat
 האפליקציה היא **full-trust desktop** (`runFullTrust` ב-`Package.appxmanifest`) — רצה **מחוץ**
 ל-AppContainer, ולכן ExifTool וגישת הקבצים עובדים גם תחת זהות חבילה.
 
-⚠️ **לפני אריזה:** יש להניח את `exiftool.exe` + `exiftool_files/` בתיקייה
-`src/GPhotosTakeout.App/Tools/` כדי שייכללו בחבילה (כיום יש שם רק `README.txt`).
+**ExifTool בחבילה:** `exiftool.exe` + `exiftool_files/` יושבים ב-`src/GPhotosTakeout.App/Tools/`
+ונכללים אוטומטית בחבילה (אומת: ה-MSIX מכיל את ה-exe + 508 קבצי תמיכה). הם **לא** ב-git
+(35MB) — לאחר clone נקי יש להחזירם לתיקייה הזו לפני אריזה.
 
-⚠️ **אימות ידני נדרש (במכונה שלך):** התקנת ה-MSIX (דורש חתימה/sideloading + UAC) והרצה
-לוודא ש-ExifTool **אכן כותב EXIF תחת זהות חבילה** — זה האימות הקריטי של מסלול ה-Store.
-החתימה עצמה מטופלת ע"י החנות בהגשה.
+✅ **אומת:** ExifTool כותב נכון `DateTimeOriginal`, `OffsetTimeOriginal` (offset מ-GPS),
+GPS ותיאור בעברית — נבדק מקצה-לקצה דרך ה-CLI על JPEG אמיתי.
+
+⚠️ **נותר (במכונה שלך):** התקנת ה-MSIX (חתימה/sideloading + UAC) והרצת ה-GUI לוודא שהכול עובד
+תחת זהות חבילה. החתימה מטופלת ע"י החנות בהגשה.
 
 ## החלטות עיצוב מרכזיות
 

@@ -28,6 +28,15 @@ if (cli.ShowHelp || args.Length == 0)
 }
 
 var exifToolPath = cli.WriteMetadata ? (cli.ExifToolPath ?? LocateExifTool()) : null;
+if (exifToolPath is not null && !File.Exists(exifToolPath))
+{
+    Console.Error.WriteLine($"Warning: ExifTool not found at '{exifToolPath}'; continuing without metadata.");
+    exifToolPath = null;
+}
+else if (exifToolPath is not null)
+{
+    exifToolPath = Path.GetFullPath(exifToolPath); // absolute — Process.Start needs it
+}
 
 var options = cli.ToProcessingOptions();
 var validation = OptionsValidator.Validate(options, exifToolAvailable: exifToolPath is not null);

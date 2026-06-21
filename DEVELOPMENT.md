@@ -316,9 +316,15 @@ checkbox ל-dry-run, ETA/throughput חי, ו-DI ידני של שירותים ל-
 ב-CI שמעלה את ה-.msix כ-artifact. **אומת:** החבילה נבנתה (90MB, 355 entries) וכוללת את
 ה-exe, ה-manifest, ו-`Tools/`.
 
-### 11.10 נותר (דורש את המכונה שלך)
-- הנחת `exiftool.exe` + `exiftool_files/` ב-`src/GPhotosTakeout.App/Tools/` כדי שייכללו בחבילה.
-- התקנת ה-MSIX (חתימה/sideloading + UAC) ואימות ש-ExifTool כותב EXIF **תחת זהות חבילה** —
-  האימות הקריטי של מסלול ה-Store.
+### 11.10 הטמעת ExifTool ואימות כתיבה (בוצע)
+`exiftool.exe` + `exiftool_files/` הוטמעו ב-`src/GPhotosTakeout.App/Tools/` (לא ב-git, 35MB) ונכללים
+בחבילת ה-MSIX (אומת: 508 קבצי תמיכה + ה-exe בתוך ה-.msix). **אומת E2E** דרך ה-CLI על JPEG אמיתי:
+`DateTimeOriginal=2021:07:04 03:00:00`, `OffsetTimeOriginal=+03:00` (offset מ-GPS), GPS תל-אביב,
+ותיאור "חוף תל אביב" (UTF-8). נוסף `ExifToolIntegrationTests` (gated על נוכחות exiftool, מדלג אחרת).
+**חוסן נוסף:** כשל בהפעלת ExifTool (נתיב שגוי) כבר לא מקריס את הריצה — מתדרדר בחן לארגון ללא metadata
+(`StartExifPoolOrNull` ב-Core; ולידציית נתיב ב-CLI).
+
+### 11.11 נותר (דורש את המכונה שלך)
+- התקנת ה-MSIX (חתימה/sideloading + UAC) והרצת ה-GUI תחת זהות חבילה (האימות הסופי).
 - החלפת שפה חיה ב-UI (אישור ויזואלי).
 - אופציונלי: DI container מלא ופירוק עמוק יותר של ה-ViewModel; drag-and-drop; מצב כהה.

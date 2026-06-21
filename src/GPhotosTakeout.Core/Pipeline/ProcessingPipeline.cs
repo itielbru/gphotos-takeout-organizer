@@ -58,15 +58,15 @@ public sealed class ProcessingPipeline
         var linker = new AlbumLinker();
         var pathBuilder = new OutputPathBuilder(options.OutputStructure);
 
-        await using var exifPool = _exifToolPath is not null && options.WriteMetadata && !options.DryRun
-            ? ExifToolPool.Start(_exifToolPath, options.ExifToolParallelism, options.ExifToolTimeout)
-            : null;
-
         var counters = new Counters();
         var errors = new ConcurrentBag<string>();
         var outcomes = new ConcurrentBag<FileOutcome>();
         var processed = 0;
         var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        // Starting ExifTool can fail (bad path, missing exiftool_files, permissions). Degrade
+        // gracefully — organize and date files without embedded metadata — instead of crashing.
+        await using var exifPool = StartExifPoolOrNull(options, errors, counters);
 
         var parallelism = options.OutputStructure == OutputStructure.YearMonth
             ? options.CpuParallelism
@@ -166,6 +166,25 @@ public sealed class ProcessingPipeline
             ErrorMessages = errors.ToArray(),
             Outcomes = outcomes.ToArray(),
         };
+    }
+
+    private ExifToolPool? StartExifPoolOrNull(ProcessingOptions options, ConcurrentBag<string> errors, Counters counters)
+    {
+        if (_exifToolPath is null || !options.WriteMetadata || options.DryRun)
+            return null;
+
+        try
+        {
+            return ExifToolPool.Start(_exifToolPath, options.ExifToolParallelism, options.ExifToolTimeout);
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException
+                                      or InvalidOperationException or UnauthorizedAccessException)
+        {
+            _logger.LogError(ex, "Failed to start ExifTool at {Path}; continuing without metadata", _exifToolPath);
+            Interlocked.Increment(ref counters.Errors);
+            errors.Add($"ExifTool failed to start ({ex.Message}). Files were organized and dated without embedded metadata.");
+            return null;
+        }
     }
 
     private static async Task<FileOutcome> ProcessOneAsync(
