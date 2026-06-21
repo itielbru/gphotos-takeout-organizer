@@ -17,6 +17,9 @@ internal sealed class CliOptions
     public int? ExifParallel { get; private set; }
     public bool DryRun { get; private set; }
     public string? ReportPath { get; private set; }
+    public string? LogPath { get; private set; }
+    public bool NoLog { get; private set; }
+    public bool Verbose { get; private set; }
     public bool ShowHelp { get; private set; }
 
     public ProcessingOptions ToProcessingOptions()
@@ -59,6 +62,9 @@ internal sealed class CliOptions
                 case "--exif-parallel": o.ExifParallel = ParseInt(Next(args, ref i, a), a); break;
                 case "--dry-run": o.DryRun = true; break;
                 case "--report": o.ReportPath = Next(args, ref i, a); break;
+                case "--log": o.LogPath = Next(args, ref i, a); break;
+                case "--no-log": o.NoLog = true; break;
+                case "-v" or "--verbose": o.Verbose = true; break;
                 default:
                     // Bare path → treat as an input zip for convenience.
                     if (!a.StartsWith('-')) o.Inputs.Add(a);

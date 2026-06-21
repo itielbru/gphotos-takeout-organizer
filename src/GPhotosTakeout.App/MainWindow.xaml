@@ -135,6 +135,8 @@
                 <Button Content="פתח את תיקיית הפלט" Click="OnOpenOutput" />
                 <Button Content="ייצא דוח (CSV/JSON)" Click="OnExportReport"
                         IsEnabled="{x:Bind Vm.CanExportReport, Mode=OneWay}" />
+                <Button Content="פתח קובץ לוג" Click="OnOpenLog"
+                        IsEnabled="{x:Bind Vm.HasLog, Mode=OneWay}" />
                 <Button Content="התחל מחדש" Command="{x:Bind Vm.RestartCommand}" />
             </StackPanel>
         </StackPanel>

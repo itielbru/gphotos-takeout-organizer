@@ -67,6 +67,20 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void OnOpenLog(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(Vm.LastLogPath))
+            return;
+        try
+        {
+            Process.Start(new ProcessStartInfo { FileName = Vm.LastLogPath, UseShellExecute = true });
+        }
+        catch
+        {
+            // best effort
+        }
+    }
+
     private async void OnExportReport(object sender, RoutedEventArgs e)
     {
         var picker = new FileSavePicker();

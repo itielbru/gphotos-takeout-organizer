@@ -1,7 +1,9 @@
 using System.Globalization;
 using GPhotosTakeout.Cli;
+using GPhotosTakeout.Core.Logging;
 using GPhotosTakeout.Core.Models;
 using GPhotosTakeout.Core.Pipeline;
+using Microsoft.Extensions.Logging;
 
 // Exit codes: 0 success · 1 completed with errors · 2 invalid options · 3 cancelled · 64 usage error.
 const int ExitOk = 0, ExitErrors = 1, ExitInvalid = 2, ExitCancelled = 3, ExitUsage = 64;
@@ -63,10 +65,22 @@ Console.WriteLine($"  input(s): {options.InputZipPaths.Count}   output: {options
 Console.WriteLine($"  metadata: {(exifToolPath is not null ? "on (" + exifToolPath + ")" : "off")}");
 Console.WriteLine();
 
+FileLoggerProvider? logProvider = null;
+ILogger? logger = null;
+if (!cli.NoLog)
+{
+    var logPath = cli.LogPath ?? Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "GPhotosTakeout", "logs", $"cli-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+    logProvider = new FileLoggerProvider(logPath, cli.Verbose ? LogLevel.Debug : LogLevel.Information);
+    logger = logProvider.CreateLogger("Pipeline");
+    Console.WriteLine("  log: " + logPath);
+}
+
 ProcessingReport report;
 try
 {
-    report = await new ProcessingPipeline(exifToolPath).RunAsync(options, progress, cts.Token);
+    report = await new ProcessingPipeline(exifToolPath, logger).RunAsync(options, progress, cts.Token);
 }
 catch (OperationCanceledException)
 {
@@ -112,6 +126,7 @@ if (cli.ReportPath is { } reportPath)
     Console.WriteLine("Report written to: " + reportPath);
 }
 
+logProvider?.Dispose();
 return report.Cancelled ? ExitCancelled : report.Errors > 0 ? ExitErrors : ExitOk;
 
 static string? LocateExifTool()
@@ -148,6 +163,9 @@ OPTIONS:
       --exif-parallel <n>  Concurrent ExifTool processes.
       --dry-run            Plan and report only; write nothing.
       --report <path>      Write a per-file report (.json or .csv).
+      --log <path>         Write the run log here (default: %LocalAppData%\GPhotosTakeout\logs).
+      --no-log             Do not write a log file.
+  -v, --verbose            Verbose (Debug-level) logging.
   -h, --help               Show this help.
 """);
 }

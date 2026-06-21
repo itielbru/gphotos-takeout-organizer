@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GPhotosTakeout.App.Services;
+using GPhotosTakeout.Core.Logging;
 using GPhotosTakeout.Core.Models;
 using GPhotosTakeout.Core.Pipeline;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
@@ -22,6 +25,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly DispatcherQueue _dispatcher;
     private readonly ISettingsService _settings;
     private CancellationTokenSource? _cts;
+    private FileLoggerProvider? _logProvider;
 
     public MainViewModel(DispatcherQueue dispatcher, ISettingsService settings)
     {
@@ -65,6 +69,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     // Summary.
     [ObservableProperty] private ProcessingReport? _report;
+    [ObservableProperty] private string? _lastLogPath;
+
+    public bool HasLog => !string.IsNullOrEmpty(LastLogPath);
+    partial void OnLastLogPathChanged(string? value) => OnPropertyChanged(nameof(HasLog));
 
     public bool MetadataAvailable => ExifToolPath is not null;
     public bool MetadataMissing => ExifToolPath is null;
@@ -232,10 +240,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
             EtaText = FormatEta(p);
         }));
 
+        var logger = CreateRunLogger();
+
         try
         {
-            var pipeline = new ProcessingPipeline(ExifToolPath);
-            Report = await Task.Run(() => pipeline.RunAsync(options, progress, _cts.Token));
+            var pipeline = new ProcessingPipeline(ExifToolPath, logger);
+            Report = await Task.Run(() => pipeline.RunAsync(options, progress, _cts!.Token));
         }
         catch (OperationCanceledException)
         {
@@ -287,6 +297,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
             await ReportExporter.WriteJsonAsync(report, path);
     }
 
+    private ILogger CreateRunLogger()
+    {
+        var path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "GPhotosTakeout", "logs", $"run-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+        _logProvider?.Dispose();
+        _logProvider = new FileLoggerProvider(path);
+        LastLogPath = path;
+        return _logProvider.CreateLogger("Pipeline");
+    }
+
     private static string FormatEta(ProcessingProgress p)
     {
         if (p.Phase != "Processing")
@@ -311,6 +332,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         _cts?.Dispose();
+        _logProvider?.Dispose();
         GC.SuppressFinalize(this);
     }
 }

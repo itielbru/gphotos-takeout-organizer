@@ -44,6 +44,7 @@ dotnet_diagnostic.CA1031.severity = none   # allow broad catch in best-effort pa
 dotnet_diagnostic.CA1303.severity = none   # localized literals handled via .resw
 dotnet_diagnostic.CA2007.severity = none   # ConfigureAwait used where it matters
 dotnet_diagnostic.CA1822.severity = suggestion  # instance services (gain injected state)
+dotnet_diagnostic.CA1848.severity = none   # LoggerMessage delegates: not worth it at this volume
 
 # Test projects: underscore method names are the xUnit convention.
 [tests/**.cs]

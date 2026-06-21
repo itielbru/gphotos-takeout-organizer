@@ -7,6 +7,8 @@ using GPhotosTakeout.Core.IO;
 using GPhotosTakeout.Core.Matching;
 using GPhotosTakeout.Core.Metadata;
 using GPhotosTakeout.Core.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace GPhotosTakeout.Core.Pipeline;
 
@@ -19,22 +21,35 @@ namespace GPhotosTakeout.Core.Pipeline;
 public sealed class ProcessingPipeline
 {
     private readonly string? _exifToolPath;
+    private readonly ILogger _logger;
 
     /// <param name="exifToolPath">Path to exiftool(.exe). If null, metadata writing is skipped.</param>
-    public ProcessingPipeline(string? exifToolPath) => _exifToolPath = exifToolPath;
+    /// <param name="logger">Optional logger; defaults to a no-op.</param>
+    public ProcessingPipeline(string? exifToolPath, ILogger? logger = null)
+    {
+        _exifToolPath = exifToolPath;
+        _logger = logger ?? NullLogger.Instance;
+    }
 
     public async Task<ProcessingReport> RunAsync(
         ProcessingOptions options,
         IProgress<ProcessingProgress>? progress = null,
         CancellationToken ct = default)
     {
+        _logger.LogInformation(
+            "Run starting: {Archives} archive(s), output={Output}, structure={Structure}, dryRun={DryRun}, metadata={Metadata}",
+            options.InputZipPaths.Count, options.OutputDirectory, options.OutputStructure, options.DryRun,
+            _exifToolPath is not null && options.WriteMetadata && !options.DryRun);
+
         using var reader = new TakeoutArchiveReader();
         progress?.Report(new ProcessingProgress { Phase = "Indexing" });
         var entries = reader.Index(options.InputZipPaths);
+        _logger.LogInformation("Indexed {Count} entries", entries.Count);
 
         progress?.Report(new ProcessingProgress { Phase = "Matching", Total = entries.Count });
         var matches = new SidecarMatcher().Match(entries);
         var media = matches.Where(m => !m.Media.IsSidecar).ToList();
+        _logger.LogInformation("Matched: {Media} media files", media.Count);
 
         using var journal = ResumeJournal.Open(options.OutputDirectory);
         var tz = new TimezoneResolver(options.FallbackTimeZone);
@@ -87,6 +102,8 @@ public sealed class ProcessingPipeline
                     {
                         Interlocked.Increment(ref counters.Errors);
                         errors.Add($"{match.Media.FileName}: {ex.Message}");
+                        _logger.LogWarning(ex, "Failed processing {File} (archive {Archive})",
+                            match.Media.FileName, match.Media.ArchiveId);
                         outcomes.Add(new FileOutcome
                         {
                             FileName = match.Media.FileName,
@@ -114,6 +131,7 @@ public sealed class ProcessingPipeline
         {
             // Expected when the user cancels: fall through and return a partial
             // report (already-done work is persisted in the journal for resume).
+            _logger.LogInformation("Run cancelled after {Processed}/{Total} files", processed, media.Count);
         }
 
         // Surface any ExifTool stderr that accumulated during the run; otherwise
@@ -125,8 +143,14 @@ public sealed class ProcessingPipeline
             {
                 Interlocked.Increment(ref counters.Errors);
                 errors.Add("ExifTool reported issues:" + Environment.NewLine + exifErrors.Trim());
+                _logger.LogWarning("ExifTool reported issues: {Errors}", exifErrors.Trim());
             }
         }
+
+        _logger.LogInformation(
+            "Run complete: total={Total} matched={Matched} unmatched={Unmatched} duplicates={Dup} metadata={Meta} errors={Errors} cancelled={Cancelled}",
+            media.Count, counters.Matched, counters.Unmatched, counters.Duplicates,
+            counters.MetadataWritten, counters.Errors, ct.IsCancellationRequested);
 
         return new ProcessingReport
         {
