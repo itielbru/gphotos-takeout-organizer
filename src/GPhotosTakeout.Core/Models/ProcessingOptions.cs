@@ -54,4 +54,11 @@ public sealed record ProcessingOptions
 
     /// <summary>Number of concurrent ExifTool processes (I/O-bound — keep small).</summary>
     public int ExifToolParallelism { get; init; } = 4;
+
+    /// <summary>
+    /// Plan only: index, match and resolve dates/destinations and produce a report,
+    /// but never extract, de-duplicate, move, or write metadata. Lets the user preview
+    /// the resulting organization before committing to a full run.
+    /// </summary>
+    public bool DryRun { get; init; }
 }

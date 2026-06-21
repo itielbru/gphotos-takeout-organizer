@@ -46,6 +46,9 @@ BundleArtifacts/
 **/Tools/exiftool.exe
 **/Tools/exiftool_files/
 
+# Editor / vault
+.obsidian/
+
 # OS
 Thumbs.db
 .DS_Store

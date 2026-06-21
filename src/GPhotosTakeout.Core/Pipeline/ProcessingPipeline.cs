@@ -43,13 +43,15 @@ public sealed class ProcessingPipeline
         var linker = new AlbumLinker();
         var pathBuilder = new OutputPathBuilder(options.OutputStructure);
 
-        await using var exifPool = _exifToolPath is not null && options.WriteMetadata
+        await using var exifPool = _exifToolPath is not null && options.WriteMetadata && !options.DryRun
             ? ExifToolPool.Start(_exifToolPath, options.ExifToolParallelism)
             : null;
 
         var counters = new Counters();
         var errors = new ConcurrentBag<string>();
+        var outcomes = new ConcurrentBag<FileOutcome>();
         var processed = 0;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
 
         var parallelism = options.OutputStructure == OutputStructure.YearMonth
             ? options.CpuParallelism
@@ -65,16 +67,17 @@ public sealed class ProcessingPipeline
                     var key = match.Media.ArchiveId + "|" + match.Media.Path;
                     try
                     {
-                        if (journal.IsDone(key))
+                        if (!options.DryRun && journal.IsDone(key))
                             return;
 
                         if (match.IsMatched) Interlocked.Increment(ref counters.Matched);
                         else Interlocked.Increment(ref counters.Unmatched);
 
-                        await ProcessOneAsync(match, options, reader, dateResolver, tz, pathBuilder,
-                            dedup, linker, exifPool, counters, token).ConfigureAwait(false);
+                        var outcome = await ProcessOneAsync(match, options, reader, dateResolver, tz, pathBuilder,
+                            dedup, linker, exifPool, counters, options.DryRun, token).ConfigureAwait(false);
+                        outcomes.Add(outcome);
 
-                        journal.MarkDone(key);
+                        if (!options.DryRun) journal.MarkDone(key);
                     }
                     catch (OperationCanceledException)
                     {
@@ -84,6 +87,13 @@ public sealed class ProcessingPipeline
                     {
                         Interlocked.Increment(ref counters.Errors);
                         errors.Add($"{match.Media.FileName}: {ex.Message}");
+                        outcomes.Add(new FileOutcome
+                        {
+                            FileName = match.Media.FileName,
+                            SourceFolder = match.Media.Folder,
+                            Matched = match.IsMatched,
+                            Error = ex.Message,
+                        });
                     }
                     finally
                     {
@@ -95,6 +105,7 @@ public sealed class ProcessingPipeline
                             Processed = done,
                             CurrentFile = match.Media.FileName,
                             Errors = counters.Errors,
+                            ElapsedSeconds = clock.Elapsed.TotalSeconds,
                         });
                     }
                 }).ConfigureAwait(false);
@@ -127,15 +138,17 @@ public sealed class ProcessingPipeline
             SpecialFolderItems = counters.SpecialItems,
             Errors = counters.Errors,
             Cancelled = ct.IsCancellationRequested,
+            DryRun = options.DryRun,
             ErrorMessages = errors.ToArray(),
+            Outcomes = outcomes.ToArray(),
         };
     }
 
-    private static async Task ProcessOneAsync(
+    private static async Task<FileOutcome> ProcessOneAsync(
         MatchResult match, ProcessingOptions options, TakeoutArchiveReader reader,
         DateResolver dateResolver, TimezoneResolver tz, OutputPathBuilder pathBuilder,
         HashDeduplicator dedup, AlbumLinker linker, ExifToolPool? exifPool,
-        Counters counters, CancellationToken ct)
+        Counters counters, bool dryRun, CancellationToken ct)
     {
         var media = match.Media;
 
@@ -175,6 +188,19 @@ public sealed class ProcessingPipeline
 
         var dest = pathBuilder.BuildPath(options.OutputDirectory, media, localDate);
 
+        var outcome = new FileOutcome
+        {
+            FileName = media.FileName,
+            SourceFolder = media.Folder,
+            Matched = match.IsMatched,
+            DateSource = resolved.HasValue ? resolved.Source.ToString() : null,
+            DestinationPath = dest,
+        };
+
+        // Dry-run: everything above is pure planning — stop before touching the disk.
+        if (dryRun)
+            return outcome with { Planned = true };
+
         // Album shortcut handling: an album copy that duplicates the main-library
         // copy becomes a link to the canonical file instead of a second extraction.
         var isAlbumCopy = !isSpecial
@@ -185,86 +211,99 @@ public sealed class ProcessingPipeline
         // touch the canonical destination (two copies can map to the same dest path).
         // The content hash is computed during extraction — no extra disk read.
         var tempPath = dest + "." + StableToken(media.ArchiveId + "|" + media.Path) + ".part";
-        var extract = await reader.ExtractAsync(media, tempPath, ct).ConfigureAwait(false);
 
-        // De-duplication is an atomic claim on the content hash: exactly one media
-        // file owns a given hash and produces the canonical file; identical files
-        // are duplicates that resolve the owner's final path by awaiting it.
-        if (options.DuplicateHandling == DuplicateHandling.KeepBest)
+        try
         {
-            var claim = dedup.TryClaim(extract.ContentHash);
-            if (!claim.IsOwner)
+            var extract = await reader.ExtractAsync(media, tempPath, ct).ConfigureAwait(false);
+
+            // De-duplication is an atomic claim on the content hash: exactly one media
+            // file owns a given hash and produces the canonical file; identical files
+            // are duplicates that resolve the owner's final path by awaiting it.
+            if (options.DuplicateHandling == DuplicateHandling.KeepBest)
             {
-                string canonical;
+                var claim = dedup.TryClaim(extract.ContentHash);
+                if (!claim.IsOwner)
+                {
+                    string canonical;
+                    try
+                    {
+                        canonical = await claim.CanonicalPath!.ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        // The owner failed to materialize its file — salvage this copy
+                        // instead of discarding it (avoids losing the only remaining one).
+                        var (salvageDest, salvageWrote) = await PlaceAndTagAsync(
+                            tempPath, dest, json, localDate, utcDate, offset, exifPool, counters, ct).ConfigureAwait(false);
+                        return outcome with { DestinationPath = salvageDest, MetadataWritten = salvageWrote };
+                    }
+
+                    Interlocked.Increment(ref counters.Duplicates);
+                    TryDelete(tempPath);
+
+                    if (isAlbumCopy && options.AlbumStrategy == AlbumStrategy.Shortcut)
+                    {
+                        var albumName = LastSegment(media.Folder);
+                        var linkPath = Path.Combine(options.OutputDirectory, "Albums", albumName, media.FileName);
+                        linker.Link(canonical, linkPath);
+                    }
+                    return outcome with { IsDuplicate = true, DestinationPath = canonical };
+                }
+
+                // We own this content: place the canonical file and publish its path so
+                // waiting duplicates can link to it. Publish/fail must always happen.
+                var published = false;
                 try
                 {
-                    canonical = await claim.CanonicalPath!.ConfigureAwait(false);
+                    var finalDest = MoveUnique(tempPath, dest);
+                    dedup.PublishOwnerPath(extract.ContentHash, finalDest);
+                    published = true;
+                    var wrote = await TagAsync(finalDest, json, localDate, utcDate, offset, exifPool, counters, ct)
+                        .ConfigureAwait(false);
+                    return outcome with { DestinationPath = finalDest, MetadataWritten = wrote };
                 }
-                catch
+                finally
                 {
-                    // The owner failed to materialize its file — salvage this copy
-                    // instead of discarding it (avoids losing the only remaining one).
-                    await PlaceAndTagAsync(tempPath, dest, json, localDate, utcDate, offset,
-                        exifPool, counters, ct).ConfigureAwait(false);
-                    return;
+                    if (!published) dedup.FailOwner(extract.ContentHash);
                 }
-
-                Interlocked.Increment(ref counters.Duplicates);
-                TryDelete(tempPath);
-
-                if (isAlbumCopy && options.AlbumStrategy == AlbumStrategy.Shortcut)
-                {
-                    var albumName = LastSegment(media.Folder);
-                    var linkPath = Path.Combine(options.OutputDirectory, "Albums", albumName, media.FileName);
-                    linker.Link(canonical, linkPath);
-                }
-                return;
             }
 
-            // We own this content: place the canonical file and publish its path so
-            // waiting duplicates can link to it. Publish/fail must always happen.
-            var published = false;
-            try
-            {
-                var finalDest = MoveUnique(tempPath, dest);
-                dedup.PublishOwnerPath(extract.ContentHash, finalDest);
-                published = true;
-                await TagAsync(finalDest, json, localDate, utcDate, offset, exifPool, counters, ct)
-                    .ConfigureAwait(false);
-            }
-            finally
-            {
-                if (!published) dedup.FailOwner(extract.ContentHash);
-            }
-            return;
+            // KeepAll: no de-duplication, just place and tag every copy.
+            var (placedDest, placedWrote) = await PlaceAndTagAsync(
+                tempPath, dest, json, localDate, utcDate, offset, exifPool, counters, ct).ConfigureAwait(false);
+            return outcome with { DestinationPath = placedDest, MetadataWritten = placedWrote };
         }
-
-        // KeepAll: no de-duplication, just place and tag every copy.
-        await PlaceAndTagAsync(tempPath, dest, json, localDate, utcDate, offset, exifPool, counters, ct)
-            .ConfigureAwait(false);
+        finally
+        {
+            // Never leave an orphaned .part behind (the happy paths move/delete it,
+            // but an exception mid-flight would otherwise litter the output tree).
+            if (LongPath.Exists(tempPath)) TryDelete(tempPath);
+        }
     }
 
-    private static async Task PlaceAndTagAsync(
+    private static async Task<(string dest, bool metadataWritten)> PlaceAndTagAsync(
         string tempPath, string dest, TakeoutJson? json, DateTime? localDate, DateTime? utcDate,
         string? offset, ExifToolPool? exifPool, Counters counters, CancellationToken ct)
     {
         var finalDest = MoveUnique(tempPath, dest);
-        await TagAsync(finalDest, json, localDate, utcDate, offset, exifPool, counters, ct).ConfigureAwait(false);
+        var wrote = await TagAsync(finalDest, json, localDate, utcDate, offset, exifPool, counters, ct).ConfigureAwait(false);
+        return (finalDest, wrote);
     }
 
-    private static async Task TagAsync(
+    private static async Task<bool> TagAsync(
         string finalDest, TakeoutJson? json, DateTime? localDate, DateTime? utcDate, string? offset,
         ExifToolPool? exifPool, Counters counters, CancellationToken ct)
     {
         if (exifPool is null)
-            return;
+            return false;
 
         var meta = BuildMetadata(json, localDate, utcDate, offset);
-        if (!meta.IsEmpty)
-        {
-            await exifPool.WriteAsync(finalDest, meta, ct).ConfigureAwait(false);
-            Interlocked.Increment(ref counters.MetadataWritten);
-        }
+        if (meta.IsEmpty)
+            return false;
+
+        await exifPool.WriteAsync(finalDest, meta, ct).ConfigureAwait(false);
+        Interlocked.Increment(ref counters.MetadataWritten);
+        return true;
     }
 
     /// <summary>
@@ -272,9 +311,11 @@ public sealed class ProcessingPipeline
     /// claims the same name first. Without the retry, a lost race throws and the
     /// media file would be dropped (data loss).
     /// </summary>
+    private const int MaxRenameAttempts = 100_000;
+
     private static string MoveUnique(string tempPath, string dest)
     {
-        while (true)
+        for (var attempt = 0; attempt < MaxRenameAttempts; attempt++)
         {
             var finalDest = MakeUnique(dest);
             try
@@ -287,6 +328,9 @@ public sealed class ProcessingPipeline
                 // Another thread won this name between MakeUnique and Move; pick the next.
             }
         }
+
+        throw new IOException(
+            $"Could not move '{tempPath}' to a free name near '{dest}' after {MaxRenameAttempts} attempts.");
     }
 
     /// <summary>Returns dest if free, otherwise appends " (1)", " (2)", ... before the extension.</summary>
@@ -298,12 +342,15 @@ public sealed class ProcessingPipeline
         var dir = Path.GetDirectoryName(dest)!;
         var stem = Path.GetFileNameWithoutExtension(dest);
         var ext = Path.GetExtension(dest);
-        for (var i = 1; ; i++)
+        for (var i = 1; i <= MaxRenameAttempts; i++)
         {
             var candidate = Path.Combine(dir, $"{stem} ({i}){ext}");
             if (!LongPath.Exists(candidate))
                 return candidate;
         }
+
+        throw new IOException(
+            $"Could not find a free name for '{dest}' after {MaxRenameAttempts} attempts.");
     }
 
     private static string StableToken(string key)
