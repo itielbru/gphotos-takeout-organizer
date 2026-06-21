@@ -21,6 +21,7 @@ namespace GPhotosTakeout.Core.Metadata;
 public sealed class ExifToolBatchWriter : IAsyncDisposable
 {
     private const string Sentinel = "{ready}";
+    private const int MaxErrorBufferChars = 64 * 1024;
     private static readonly HashSet<string> VideoExtensions =
         new(StringComparer.OrdinalIgnoreCase) { ".mp4", ".mov", ".m4v", ".mp", ".mv", ".3gp" };
 
@@ -29,6 +30,8 @@ public sealed class ExifToolBatchWriter : IAsyncDisposable
         Channel.CreateUnbounded<TaskCompletionSource<bool>>();
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private readonly StringBuilder _errorBuffer = new();
+    private volatile bool _faulted;
+    private volatile bool _disposing;
 
     private ExifToolBatchWriter(Process process)
     {
@@ -36,6 +39,10 @@ public sealed class ExifToolBatchWriter : IAsyncDisposable
         _ = ReadStdOutLoopAsync();
         _ = ReadStdErrLoopAsync();
     }
+
+    /// <summary>False once the process has died or a command has timed out; the pool
+    /// then discards this writer and starts a fresh one.</summary>
+    public bool IsHealthy => !_faulted && !_process.HasExited;
 
     public static ExifToolBatchWriter Start(string exifToolPath)
     {
@@ -64,10 +71,15 @@ public sealed class ExifToolBatchWriter : IAsyncDisposable
     }
 
     /// <summary>Writes the given metadata into one already-extracted media file.</summary>
-    public async Task WriteAsync(string filePath, ExifMetadata meta, CancellationToken ct = default)
+    /// <param name="timeout">Max time to wait for ExifTool to acknowledge the write
+    /// before the process is treated as hung and faulted.</param>
+    public async Task WriteAsync(string filePath, ExifMetadata meta, TimeSpan timeout, CancellationToken ct = default)
     {
         if (meta.IsEmpty)
             return;
+
+        if (_faulted || _process.HasExited)
+            throw new InvalidOperationException("ExifTool process is not available (faulted or exited).");
 
         var args = BuildArgs(filePath, meta);
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -86,7 +98,26 @@ public sealed class ExifToolBatchWriter : IAsyncDisposable
             _writeLock.Release();
         }
 
-        await tcs.Task.ConfigureAwait(false);
+        try
+        {
+            await tcs.Task.WaitAsync(timeout, ct).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            // The single -stay_open process no longer aligns request↔response, so we
+            // must tear it down; the pool replaces it with a fresh process.
+            Fault(new TimeoutException($"ExifTool timed out after {timeout.TotalSeconds:0}s on this file."));
+            throw new TimeoutException(
+                $"ExifTool timed out writing '{Path.GetFileName(filePath)}' after {timeout.TotalSeconds:0}s.");
+        }
+    }
+
+    private void Fault(Exception ex)
+    {
+        _faulted = true;
+        FailAllWaiters(ex);
+        try { if (!_process.HasExited) _process.Kill(entireProcessTree: true); }
+        catch { /* already gone */ }
     }
 
     /// <summary>Builds the per-file ExifTool argument list (one token per line).</summary>
@@ -170,10 +201,15 @@ public sealed class ExifToolBatchWriter : IAsyncDisposable
                     waiter.TrySetResult(true);
                 }
             }
+
+            // stdout closed: the process exited. If that wasn't us shutting it down,
+            // any in-flight waiter would hang forever — fault them instead.
+            if (!_disposing)
+                Fault(new IOException("ExifTool exited unexpectedly."));
         }
         catch (Exception ex)
         {
-            FailAllWaiters(ex);
+            Fault(ex);
         }
     }
 
@@ -183,7 +219,14 @@ public sealed class ExifToolBatchWriter : IAsyncDisposable
         {
             string? line;
             while ((line = await _process.StandardError.ReadLineAsync().ConfigureAwait(false)) is not null)
-                lock (_errorBuffer) _errorBuffer.AppendLine(line);
+            {
+                lock (_errorBuffer)
+                {
+                    _errorBuffer.AppendLine(line);
+                    if (_errorBuffer.Length > MaxErrorBufferChars)
+                        _errorBuffer.Remove(0, _errorBuffer.Length - MaxErrorBufferChars);
+                }
+            }
         }
         catch
         {
@@ -209,6 +252,7 @@ public sealed class ExifToolBatchWriter : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        _disposing = true;
         try
         {
             await _process.StandardInput.WriteLineAsync("-stay_open").ConfigureAwait(false);

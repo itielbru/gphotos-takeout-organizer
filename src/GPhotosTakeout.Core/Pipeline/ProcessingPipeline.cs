@@ -44,7 +44,7 @@ public sealed class ProcessingPipeline
         var pathBuilder = new OutputPathBuilder(options.OutputStructure);
 
         await using var exifPool = _exifToolPath is not null && options.WriteMetadata && !options.DryRun
-            ? ExifToolPool.Start(_exifToolPath, options.ExifToolParallelism)
+            ? ExifToolPool.Start(_exifToolPath, options.ExifToolParallelism, options.ExifToolTimeout)
             : null;
 
         var counters = new Counters();

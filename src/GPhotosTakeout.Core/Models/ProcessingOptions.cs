@@ -56,6 +56,13 @@ public sealed record ProcessingOptions
     public int ExifToolParallelism { get; init; } = 4;
 
     /// <summary>
+    /// Max time to wait for ExifTool to finish writing one file before treating the
+    /// process as hung (it is then killed and replaced). Large videos can be slow, so
+    /// keep this generous.
+    /// </summary>
+    public TimeSpan ExifToolTimeout { get; init; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
     /// Plan only: index, match and resolve dates/destinations and produce a report,
     /// but never extract, de-duplicate, move, or write metadata. Lets the user preview
     /// the resulting organization before committing to a full run.
