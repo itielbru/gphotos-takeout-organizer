@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using GPhotosTakeout.App.Services;
 using GPhotosTakeout.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Windows.Storage.Pickers;
@@ -10,12 +11,15 @@ namespace GPhotosTakeout.App;
 
 public sealed partial class MainWindow : Window
 {
+    private static readonly string[] CsvExt = [".csv"];
+    private static readonly string[] JsonExt = [".json"];
+
     public MainViewModel Vm { get; }
 
     public MainWindow()
     {
         InitializeComponent();
-        Vm = new MainViewModel(DispatcherQueue);
+        Vm = new MainViewModel(DispatcherQueue, new SettingsService());
         Title = "מארגן Google Photos Takeout";
     }
 
@@ -61,5 +65,19 @@ public sealed partial class MainWindow : Window
         {
             // best effort
         }
+    }
+
+    private async void OnExportReport(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileSavePicker();
+        InitializeWithWindow.Initialize(picker, Hwnd);
+        picker.SuggestedStartLocation = PickerLocationId.Desktop;
+        picker.SuggestedFileName = "gphotos-report";
+        picker.FileTypeChoices.Add("CSV", CsvExt);
+        picker.FileTypeChoices.Add("JSON", JsonExt);
+
+        var file = await picker.PickSaveFileAsync();
+        if (file is not null)
+            await Vm.ExportReportAsync(file.Path);
     }
 }
