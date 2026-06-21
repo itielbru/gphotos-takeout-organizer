@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="GPhotosTakeout.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:GPhotosTakeout.App.ViewModels">
+
+    <Grid x:Name="Root" FlowDirection="RightToLeft" Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="2">
+            <TextBlock Text="מארגן Google Photos Takeout" FontSize="26" FontWeight="SemiBold" />
+            <TextBlock Text="מאחד מטא-דאטה, מתקן תאריכים ומסדר את ספריית התמונות שלך"
+                       Opacity="0.7" FontSize="14" />
+        </StackPanel>
+
+        <!-- ===================== Step 1: Source ===================== -->
+        <StackPanel Grid.Row="1" Spacing="12"
+                    Visibility="{x:Bind Vm.SourceVisibility, Mode=OneWay}">
+            <TextBlock Text="שלב 1 — בחירת קבצים" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="הוסף את קובצי ה-ZIP של ה-Takeout (אפשר כמה חלקים יחד)." Opacity="0.8" />
+            <Button Content="הוסף קבצי ZIP" Click="OnAddZips" />
+            <ListView ItemsSource="{x:Bind Vm.ZipFiles, Mode=OneWay}" Height="240"
+                      BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock Text="{x:Bind}" TextTrimming="CharacterEllipsis" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <Button Content="המשך" Style="{ThemeResource AccentButtonStyle}"
+                    Command="{x:Bind Vm.GoNextCommand}" HorizontalAlignment="Left" />
+        </StackPanel>
+
+        <!-- ===================== Step 2: Options ===================== -->
+        <ScrollViewer Grid.Row="1"
+                      Visibility="{x:Bind Vm.OptionsVisibility, Mode=OneWay}">
+            <StackPanel Spacing="12">
+                <TextBlock Text="שלב 2 — הגדרות עיבוד" FontSize="18" FontWeight="SemiBold" />
+
+                <TextBlock Text="מבנה תיקיות הפלט" FontWeight="SemiBold" />
+                <ComboBox SelectedIndex="{x:Bind Vm.OutputStructureIndex, Mode=TwoWay}" Width="320">
+                    <ComboBoxItem Content="לפי שנה/חודש (מומלץ)" />
+                    <ComboBoxItem Content="לפי אלבומים" />
+                    <ComboBoxItem Content="תיקייה אחת (שטוח)" />
+                </ComboBox>
+
+                <TextBlock Text="טיפול באלבומים" FontWeight="SemiBold" />
+                <ComboBox SelectedIndex="{x:Bind Vm.AlbumStrategyIndex, Mode=TwoWay}" Width="320">
+                    <ComboBoxItem Content="קיצורי דרך (חוסך מקום)" />
+                    <ComboBoxItem Content="העתקה כפולה" />
+                    <ComboBoxItem Content="קובץ JSON של אלבומים" />
+                    <ComboBoxItem Content="להתעלם מאלבומים" />
+                </ComboBox>
+
+                <TextBlock Text="כפילויות" FontWeight="SemiBold" />
+                <ComboBox SelectedIndex="{x:Bind Vm.DuplicateHandlingIndex, Mode=TwoWay}" Width="320">
+                    <ComboBoxItem Content="לשמור עותק אחד (מומלץ)" />
+                    <ComboBoxItem Content="לשמור את כל העותקים" />
+                </ComboBox>
+
+                <TextBlock Text="אזור זמן ברירת מחדל (כשאין GPS)" FontWeight="SemiBold" />
+                <TextBox Text="{x:Bind Vm.FallbackTimeZone, Mode=TwoWay}" Width="320"
+                         PlaceholderText="לדוגמה: Asia/Jerusalem" />
+
+                <TextBlock Text="תיקיית פלט" FontWeight="SemiBold" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="בחר תיקייה" Click="OnChooseOutput" />
+                    <TextBlock Text="{x:Bind Vm.OutputDirectory, Mode=OneWay}" VerticalAlignment="Center"
+                               Opacity="0.8" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <InfoBar IsOpen="{x:Bind Vm.MetadataAvailable, Mode=OneWay}" Severity="Success"
+                         IsClosable="False" Title="ExifTool זוהה" Message="מטא-דאטה ייכתב ישירות לקבצים." />
+                <InfoBar IsOpen="{x:Bind Vm.MetadataMissing, Mode=OneWay}" Severity="Warning" IsClosable="False"
+                         Title="ExifTool לא נמצא"
+                         Message="הקבצים יאורגנו ויתוארכו, אך מטא-דאטה לא ייכתב. הנח את exiftool.exe בתיקיית Tools." />
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="חזרה" Command="{x:Bind Vm.GoBackCommand}" />
+                    <Button Content="המשך" Style="{ThemeResource AccentButtonStyle}"
+                            Command="{x:Bind Vm.GoNextCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ===================== Step 3: Processing ===================== -->
+        <StackPanel Grid.Row="1" Spacing="14" VerticalAlignment="Top"
+                    Visibility="{x:Bind Vm.ProcessingVisibility, Mode=OneWay}">
+            <TextBlock Text="שלב 3 — עיבוד" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Bind Vm.Phase, Mode=OneWay}" FontSize="15" />
+            <ProgressBar Value="{x:Bind Vm.ProgressFraction, Mode=OneWay}" Maximum="1" Height="8" />
+            <TextBlock Text="{x:Bind Vm.CurrentFile, Mode=OneWay}" Opacity="0.7"
+                       TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{x:Bind Vm.ErrorCount, Mode=OneWay}" Opacity="0.7" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="התחל עיבוד" Style="{ThemeResource AccentButtonStyle}"
+                        Command="{x:Bind Vm.StartCommand}" />
+                <Button Content="ביטול" Command="{x:Bind Vm.CancelCommand}" />
+                <Button Content="חזרה" Command="{x:Bind Vm.GoBackCommand}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ===================== Step 4: Summary ===================== -->
+        <StackPanel Grid.Row="1" Spacing="10" VerticalAlignment="Top"
+                    Visibility="{x:Bind Vm.SummaryVisibility, Mode=OneWay}">
+            <TextBlock Text="סיכום" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Bind Vm.SummaryText, Mode=OneWay}" TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="פתח את תיקיית הפלט" Click="OnOpenOutput" />
+                <Button Content="התחל מחדש" Command="{x:Bind Vm.RestartCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

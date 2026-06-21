@@ -1,0 +1,51 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Pp]ublish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.vsidx
+*.vspscc
+*.vssscc
+
+# Rider / JetBrains
+.idea/
+
+# Test / coverage
+[Tt]est[Rr]esults/
+coverage/
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
+coverage.opencover.xml
+
+# MSIX packaging
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.appxupload
+*.msix
+*.msixbundle
+*.cer
+*.pfx
+
+# ExifTool (bundled per-machine; not committed)
+**/Tools/exiftool.exe
+**/Tools/exiftool_files/
+
+# OS
+Thumbs.db
+.DS_Store

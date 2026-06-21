@@ -1,0 +1,22 @@
+<Project>
+
+  <!-- Shared settings for every project in the solution. Individual .csproj files
+       can still override these. -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- Roslyn analyzers + .editorconfig code-style enforcement at build time. -->
+    <AnalysisLevel>latest-Recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Warnings-as-errors is opt-in per project (set in each .csproj) so the WinUI
+         App's generated code doesn't break the build. Flip CoreWarningsAsErrors to
+         tighten Core/Cli/Tests once the analyzer backlog is clean. -->
+    <CoreWarningsAsErrors>false</CoreWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

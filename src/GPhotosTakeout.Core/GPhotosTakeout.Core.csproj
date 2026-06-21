@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>GPhotosTakeout.Core</RootNamespace>
+    <!-- Core is analyzer-clean; keep it that way. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GeoTimeZone" Version="5.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="GPhotosTakeout.Tests" />
+  </ItemGroup>
+
+</Project>

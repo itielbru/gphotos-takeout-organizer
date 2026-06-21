@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore (Core + Tests)
+        run: dotnet restore tests/GPhotosTakeout.Tests/GPhotosTakeout.Tests.csproj
+
+      - name: Build Core
+        run: dotnet build src/GPhotosTakeout.Core/GPhotosTakeout.Core.csproj -c Release --no-restore
+
+      - name: Test with coverage
+        run: >
+          dotnet test tests/GPhotosTakeout.Tests/GPhotosTakeout.Tests.csproj
+          -c Release
+          --collect:"XPlat Code Coverage"
+          --results-directory ./coverage
+          --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            ./coverage/**/*.trx
+            ./coverage/**/coverage.cobertura.xml
+
+  build-app:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build WinUI app (x64)
+        run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64
