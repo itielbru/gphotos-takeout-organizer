@@ -40,10 +40,31 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _duplicateHandlingIndex = s.DuplicateHandlingIndex;
         _fallbackTimeZone = s.FallbackTimeZone ?? "Asia/Jerusalem";
         _dryRun = s.DryRun;
+
+        var lang = Localization.FromCode(s.Language);
+        _languageIndex = lang == AppLanguage.Hebrew ? 0 : 1;
+        _s = Localization.For(lang);
+        _flowDirection = Localization.FlowFor(lang);
     }
 
     public ObservableCollection<string> ZipFiles { get; } = new();
     public ObservableCollection<string> ReportErrors { get; } = new();
+
+    // Localization: bound OneWay so switching language updates the whole UI live.
+    [ObservableProperty] private AppStrings _s = Localization.For(AppLanguage.Hebrew);
+    [ObservableProperty] private FlowDirection _flowDirection = FlowDirection.RightToLeft;
+    [ObservableProperty] private int _languageIndex;   // 0 = Hebrew, 1 = English
+
+    partial void OnLanguageIndexChanged(int value)
+    {
+        var lang = value == 0 ? AppLanguage.Hebrew : AppLanguage.English;
+        S = Localization.For(lang);
+        FlowDirection = Localization.FlowFor(lang);
+        OnPropertyChanged(nameof(SummaryText));
+        PersistSettings();
+    }
+
+    private AppLanguage CurrentLanguage => LanguageIndex == 0 ? AppLanguage.Hebrew : AppLanguage.English;
 
     [ObservableProperty] private WizardStep _step = WizardStep.Source;
     [ObservableProperty] private string? _outputDirectory;
@@ -88,18 +109,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
         get
         {
             if (Report is not { } r)
-                return "אין נתונים.";
+                return S.SummaryNoData;
             var lines = new[]
             {
-                r.DryRun ? "תצוגה מקדימה (Dry-run) — לא נכתב דבר לדיסק." : "העיבוד הושלם.",
-                $"סך הכל קבצים: {r.TotalMedia}",
-                $"הותאמו למטא-דאטה: {r.Matched}",
-                $"ללא JSON: {r.Unmatched}",
-                $"כפילויות שהוסרו: {r.Duplicates}",
-                $"מטא-דאטה נכתב: {r.MetadataWritten}",
-                $"תיקיות מיוחדות: {r.SpecialFolderItems}",
-                $"שגיאות: {r.Errors}",
-                r.Cancelled ? "⚠ העיבוד בוטל (תוצאה חלקית)." : "",
+                r.DryRun ? S.SummaryDryRun : S.SummaryDone,
+                $"{S.LblTotal}: {r.TotalMedia}",
+                $"{S.LblMatched}: {r.Matched}",
+                $"{S.LblUnmatched}: {r.Unmatched}",
+                $"{S.LblDuplicates}: {r.Duplicates}",
+                $"{S.LblMetadata}: {r.MetadataWritten}",
+                $"{S.LblSpecial}: {r.SpecialFolderItems}",
+                $"{S.LblErrors}: {r.Errors}",
+                r.Cancelled ? S.SummaryCancelled : "",
             };
             return string.Join(Environment.NewLine, lines.Where(l => l.Length > 0));
         }
@@ -208,6 +229,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         DuplicateHandlingIndex = DuplicateHandlingIndex,
         FallbackTimeZone = FallbackTimeZone,
         DryRun = DryRun,
+        Language = Localization.ToCode(CurrentLanguage),
     });
 
     private bool CanStart() => Step == WizardStep.Processing && !IsRunning
@@ -308,24 +330,24 @@ public partial class MainViewModel : ObservableObject, IDisposable
         return _logProvider.CreateLogger("Pipeline");
     }
 
-    private static string FormatEta(ProcessingProgress p)
+    private string FormatEta(ProcessingProgress p)
     {
         if (p.Phase != "Processing")
             return "";
-        var rate = $"{p.ItemsPerSecond:F1} קבצים/שנייה";
+        var rate = $"{p.ItemsPerSecond:F1} {S.FilesPerSec}";
         if (p.EtaSeconds is { } secs)
         {
             var eta = TimeSpan.FromSeconds(secs).ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
-            return $"{rate} · נותר ~{eta}";
+            return $"{rate} · {S.RemainingPrefix}{eta}";
         }
         return rate;
     }
 
-    private static string TranslatePhase(string phase) => phase switch
+    private string TranslatePhase(string phase) => phase switch
     {
-        "Indexing" => "מאנדקס קבצים…",
-        "Matching" => "מתאים מטא-דאטה…",
-        "Processing" => "מעבד תמונות…",
+        "Indexing" => S.PhaseIndexing,
+        "Matching" => S.PhaseMatching,
+        "Processing" => S.PhaseProcessing,
         _ => phase,
     };
 

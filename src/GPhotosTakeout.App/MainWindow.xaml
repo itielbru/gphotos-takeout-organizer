@@ -5,25 +5,36 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="using:GPhotosTakeout.App.ViewModels">
 
-    <Grid x:Name="Root" FlowDirection="RightToLeft" Padding="24" RowSpacing="16">
+    <Grid x:Name="Root" FlowDirection="{x:Bind Vm.FlowDirection, Mode=OneWay}" Padding="24" RowSpacing="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Spacing="2">
-            <TextBlock Text="מארגן Google Photos Takeout" FontSize="26" FontWeight="SemiBold" />
-            <TextBlock Text="מאחד מטא-דאטה, מתקן תאריכים ומסדר את ספריית התמונות שלך"
-                       Opacity="0.7" FontSize="14" />
-        </StackPanel>
+        <Grid Grid.Row="0" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Text="{x:Bind Vm.S.AppTitle, Mode=OneWay}" FontSize="26" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Bind Vm.S.AppSubtitle, Mode=OneWay}" Opacity="0.7" FontSize="14" />
+            </StackPanel>
+            <ComboBox Grid.Column="1" VerticalAlignment="Top" MinWidth="130"
+                      Header="{x:Bind Vm.S.LanguageLabel, Mode=OneWay}"
+                      SelectedIndex="{x:Bind Vm.LanguageIndex, Mode=TwoWay}">
+                <ComboBoxItem Content="עברית" />
+                <ComboBoxItem Content="English" />
+            </ComboBox>
+        </Grid>
 
         <!-- ===================== Step 1: Source ===================== -->
         <StackPanel Grid.Row="1" Spacing="12"
                     Visibility="{x:Bind Vm.SourceVisibility, Mode=OneWay}">
-            <TextBlock Text="שלב 1 — בחירת קבצים" FontSize="18" FontWeight="SemiBold" />
-            <TextBlock Text="הוסף את קובצי ה-ZIP של ה-Takeout (אפשר כמה חלקים יחד)." Opacity="0.8" />
-            <Button Content="הוסף קבצי ZIP" Click="OnAddZips" />
+            <TextBlock Text="{x:Bind Vm.S.Step1Title, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Bind Vm.S.Step1Hint, Mode=OneWay}" Opacity="0.8" />
+            <Button Content="{x:Bind Vm.S.AddZips, Mode=OneWay}" Click="OnAddZips" />
             <ListView ItemsSource="{x:Bind Vm.ZipFiles, Mode=OneWay}" Height="240"
                       BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
                 <ListView.ItemTemplate>
@@ -32,7 +43,7 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-            <Button Content="המשך" Style="{ThemeResource AccentButtonStyle}"
+            <Button Content="{x:Bind Vm.S.Continue, Mode=OneWay}" Style="{ThemeResource AccentButtonStyle}"
                     Command="{x:Bind Vm.GoNextCommand}" HorizontalAlignment="Left" />
         </StackPanel>
 
@@ -40,55 +51,57 @@
         <ScrollViewer Grid.Row="1"
                       Visibility="{x:Bind Vm.OptionsVisibility, Mode=OneWay}">
             <StackPanel Spacing="12">
-                <TextBlock Text="שלב 2 — הגדרות עיבוד" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Bind Vm.S.Step2Title, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
 
-                <TextBlock Text="מבנה תיקיות הפלט" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Bind Vm.S.OutputStructureLabel, Mode=OneWay}" FontWeight="SemiBold" />
                 <ComboBox SelectedIndex="{x:Bind Vm.OutputStructureIndex, Mode=TwoWay}" Width="320">
-                    <ComboBoxItem Content="לפי שנה/חודש (מומלץ)" />
-                    <ComboBoxItem Content="לפי אלבומים" />
-                    <ComboBoxItem Content="תיקייה אחת (שטוח)" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.StructureYearMonth, Mode=OneWay}" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.StructureAlbums, Mode=OneWay}" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.StructureFlat, Mode=OneWay}" />
                 </ComboBox>
 
-                <TextBlock Text="טיפול באלבומים" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Bind Vm.S.AlbumLabel, Mode=OneWay}" FontWeight="SemiBold" />
                 <ComboBox SelectedIndex="{x:Bind Vm.AlbumStrategyIndex, Mode=TwoWay}" Width="320">
-                    <ComboBoxItem Content="קיצורי דרך (חוסך מקום)" />
-                    <ComboBoxItem Content="העתקה כפולה" />
-                    <ComboBoxItem Content="קובץ JSON של אלבומים" />
-                    <ComboBoxItem Content="להתעלם מאלבומים" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.AlbumShortcut, Mode=OneWay}" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.AlbumDuplicate, Mode=OneWay}" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.AlbumJson, Mode=OneWay}" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.AlbumNothing, Mode=OneWay}" />
                 </ComboBox>
 
-                <TextBlock Text="כפילויות" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Bind Vm.S.DuplicatesLabel, Mode=OneWay}" FontWeight="SemiBold" />
                 <ComboBox SelectedIndex="{x:Bind Vm.DuplicateHandlingIndex, Mode=TwoWay}" Width="320">
-                    <ComboBoxItem Content="לשמור עותק אחד (מומלץ)" />
-                    <ComboBoxItem Content="לשמור את כל העותקים" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.DupKeepBest, Mode=OneWay}" />
+                    <ComboBoxItem Content="{x:Bind Vm.S.DupKeepAll, Mode=OneWay}" />
                 </ComboBox>
 
-                <TextBlock Text="אזור זמן ברירת מחדל (כשאין GPS)" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Bind Vm.S.TimezoneLabel, Mode=OneWay}" FontWeight="SemiBold" />
                 <TextBox Text="{x:Bind Vm.FallbackTimeZone, Mode=TwoWay}" Width="320"
-                         PlaceholderText="לדוגמה: Asia/Jerusalem" />
+                         PlaceholderText="{x:Bind Vm.S.TimezonePlaceholder, Mode=OneWay}" />
 
-                <TextBlock Text="תיקיית פלט" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Bind Vm.S.OutputLabel, Mode=OneWay}" FontWeight="SemiBold" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="בחר תיקייה" Click="OnChooseOutput" />
+                    <Button Content="{x:Bind Vm.S.ChooseFolder, Mode=OneWay}" Click="OnChooseOutput" />
                     <TextBlock Text="{x:Bind Vm.OutputDirectory, Mode=OneWay}" VerticalAlignment="Center"
                                Opacity="0.8" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
 
-                <CheckBox Content="תצוגה מקדימה בלבד (Dry-run) — תכנון וחישוב ללא כתיבה לדיסק"
+                <CheckBox Content="{x:Bind Vm.S.DryRunLabel, Mode=OneWay}"
                           IsChecked="{x:Bind Vm.DryRun, Mode=TwoWay}" />
 
                 <InfoBar IsOpen="{x:Bind Vm.MetadataAvailable, Mode=OneWay}" Severity="Success"
-                         IsClosable="False" Title="ExifTool זוהה" Message="מטא-דאטה ייכתב ישירות לקבצים." />
+                         IsClosable="False" Title="{x:Bind Vm.S.ExifFoundTitle, Mode=OneWay}"
+                         Message="{x:Bind Vm.S.ExifFoundMsg, Mode=OneWay}" />
                 <InfoBar IsOpen="{x:Bind Vm.MetadataMissing, Mode=OneWay}" Severity="Warning" IsClosable="False"
-                         Title="ExifTool לא נמצא"
-                         Message="הקבצים יאורגנו ויתוארכו, אך מטא-דאטה לא ייכתב. הנח את exiftool.exe בתיקיית Tools." />
+                         Title="{x:Bind Vm.S.ExifMissingTitle, Mode=OneWay}"
+                         Message="{x:Bind Vm.S.ExifMissingMsg, Mode=OneWay}" />
 
                 <InfoBar IsOpen="{x:Bind Vm.HasValidationError, Mode=OneWay}" Severity="Error" IsClosable="False"
-                         Title="לא ניתן להמשיך" Message="{x:Bind Vm.ValidationMessage, Mode=OneWay}" />
+                         Title="{x:Bind Vm.S.ValidationTitle, Mode=OneWay}"
+                         Message="{x:Bind Vm.ValidationMessage, Mode=OneWay}" />
 
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="חזרה" Command="{x:Bind Vm.GoBackCommand}" />
-                    <Button Content="המשך" Style="{ThemeResource AccentButtonStyle}"
+                    <Button Content="{x:Bind Vm.S.Back, Mode=OneWay}" Command="{x:Bind Vm.GoBackCommand}" />
+                    <Button Content="{x:Bind Vm.S.Continue, Mode=OneWay}" Style="{ThemeResource AccentButtonStyle}"
                             Command="{x:Bind Vm.GoNextCommand}" />
                 </StackPanel>
             </StackPanel>
@@ -97,28 +110,28 @@
         <!-- ===================== Step 3: Processing ===================== -->
         <StackPanel Grid.Row="1" Spacing="14" VerticalAlignment="Top"
                     Visibility="{x:Bind Vm.ProcessingVisibility, Mode=OneWay}">
-            <TextBlock Text="שלב 3 — עיבוד" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Bind Vm.S.Step3Title, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
             <TextBlock Text="{x:Bind Vm.Phase, Mode=OneWay}" FontSize="15" />
             <ProgressBar Value="{x:Bind Vm.ProgressFraction, Mode=OneWay}" Maximum="1" Height="8" />
             <TextBlock Text="{x:Bind Vm.CurrentFile, Mode=OneWay}" Opacity="0.7"
                        TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{x:Bind Vm.EtaText, Mode=OneWay}" Opacity="0.7" />
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Content="התחל עיבוד" Style="{ThemeResource AccentButtonStyle}"
+                <Button Content="{x:Bind Vm.S.Start, Mode=OneWay}" Style="{ThemeResource AccentButtonStyle}"
                         Command="{x:Bind Vm.StartCommand}" />
-                <Button Content="ביטול" Command="{x:Bind Vm.CancelCommand}" />
-                <Button Content="חזרה" Command="{x:Bind Vm.GoBackCommand}" />
+                <Button Content="{x:Bind Vm.S.Cancel, Mode=OneWay}" Command="{x:Bind Vm.CancelCommand}" />
+                <Button Content="{x:Bind Vm.S.Back, Mode=OneWay}" Command="{x:Bind Vm.GoBackCommand}" />
             </StackPanel>
         </StackPanel>
 
         <!-- ===================== Step 4: Summary ===================== -->
         <StackPanel Grid.Row="1" Spacing="10" VerticalAlignment="Top"
                     Visibility="{x:Bind Vm.SummaryVisibility, Mode=OneWay}">
-            <TextBlock Text="סיכום" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Bind Vm.S.SummaryTitle, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
             <TextBlock Text="{x:Bind Vm.SummaryText, Mode=OneWay}" TextWrapping="Wrap" />
 
             <InfoBar IsOpen="{x:Bind Vm.HasErrors, Mode=OneWay}" Severity="Warning" IsClosable="False"
-                     Title="היו שגיאות בעיבוד">
+                     Title="{x:Bind Vm.S.ErrorsTitle, Mode=OneWay}">
                 <InfoBar.Content>
                     <ListView ItemsSource="{x:Bind Vm.ReportErrors, Mode=OneWay}" MaxHeight="220" Margin="0,8,0,8"
                               SelectionMode="None">
@@ -132,12 +145,12 @@
             </InfoBar>
 
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Content="פתח את תיקיית הפלט" Click="OnOpenOutput" />
-                <Button Content="ייצא דוח (CSV/JSON)" Click="OnExportReport"
+                <Button Content="{x:Bind Vm.S.OpenOutput, Mode=OneWay}" Click="OnOpenOutput" />
+                <Button Content="{x:Bind Vm.S.ExportReport, Mode=OneWay}" Click="OnExportReport"
                         IsEnabled="{x:Bind Vm.CanExportReport, Mode=OneWay}" />
-                <Button Content="פתח קובץ לוג" Click="OnOpenLog"
+                <Button Content="{x:Bind Vm.S.OpenLog, Mode=OneWay}" Click="OnOpenLog"
                         IsEnabled="{x:Bind Vm.HasLog, Mode=OneWay}" />
-                <Button Content="התחל מחדש" Command="{x:Bind Vm.RestartCommand}" />
+                <Button Content="{x:Bind Vm.S.Restart, Mode=OneWay}" Command="{x:Bind Vm.RestartCommand}" />
             </StackPanel>
         </StackPanel>
     </Grid>

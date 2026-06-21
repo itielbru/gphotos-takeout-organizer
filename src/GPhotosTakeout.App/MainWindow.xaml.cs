@@ -20,7 +20,7 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         Vm = new MainViewModel(DispatcherQueue, new SettingsService());
-        Title = "מארגן Google Photos Takeout";
+        Title = Vm.S.AppTitle;
     }
 
     private nint Hwnd => WindowNative.GetWindowHandle(this);
