@@ -54,5 +54,24 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Build WinUI app (x64)
+      - name: Build WinUI app (x64, unpackaged)
         run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64
+
+  package-msix:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build MSIX (Store, x64, unsigned)
+        run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64 -p:Packaging=true
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msix-x64
+          path: src/GPhotosTakeout.App/AppPackages/**/*.msix

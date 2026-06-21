@@ -13,10 +13,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
 
-    <!-- Unpackaged / self-contained: full file-system trust, can launch ExifTool. -->
-    <WindowsPackageType>None</WindowsPackageType>
+    <!-- Packaging model:
+         * default (no Packaging prop)  → unpackaged, self-contained, full file-system
+           trust, can launch ExifTool. This is the proven dev/run build used by CI.
+         * -p:Packaging=true            → MSIX (Store) build, full-trust desktop app
+           (runFullTrust, NOT sandboxed), so ExifTool + file access still work.
+         Both are self-contained so the WinAppSDK runtime ships with the app. -->
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <EnableMsixTooling>false</EnableMsixTooling>
+    <WindowsPackageType Condition="'$(Packaging)' == 'true'">MSIX</WindowsPackageType>
+    <WindowsPackageType Condition="'$(Packaging)' != 'true'">None</WindowsPackageType>
+    <EnableMsixTooling Condition="'$(Packaging)' == 'true'">true</EnableMsixTooling>
+    <EnableMsixTooling Condition="'$(Packaging)' != 'true'">false</EnableMsixTooling>
+    <GenerateAppxPackageOnBuild Condition="'$(Packaging)' == 'true'">true</GenerateAppxPackageOnBuild>
+    <AppxPackageSigningEnabled Condition="'$(Packaging)' == 'true'">false</AppxPackageSigningEnabled>
+    <AppxBundle Condition="'$(Packaging)' == 'true'">Never</AppxBundle>
 
     <!-- MVVMTK0045 advises partial properties for AOT/WinRT marshalling. We ship a
          JIT self-contained app (not AOT), so the field form is correct and safe. -->
@@ -36,6 +46,15 @@
   <!-- Ship the Tools folder (drop exiftool.exe here) next to the app. -->
   <ItemGroup>
     <None Include="Tools\**" CopyToOutputDirectory="PreserveNewest" LinkBase="Tools" />
+  </ItemGroup>
+
+  <!-- MSIX-only: the package manifest and Store logos (opt-in via -p:Packaging=true so
+       the default unpackaged build is unaffected). -->
+  <ItemGroup Condition="'$(Packaging)' == 'true'">
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+    <Content Include="Assets\*.png" />
   </ItemGroup>
 
 </Project>

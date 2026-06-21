@@ -57,8 +57,27 @@ dotnet run --project src/GPhotosTakeout.Cli -- --help
 ```
 
 דגלים עיקריים: `--structure yearmonth|albums|flat`, `--albums`, `--duplicates`,
-`--timezone <IANA>`, `--no-metadata`, `--exiftool <path>`, `--dry-run`, `--report <.json|.csv>`.
-קודי יציאה: 0 הצלחה · 1 הושלם עם שגיאות · 2 קלט לא תקין · 3 בוטל.
+`--timezone <IANA>`, `--no-metadata`, `--exiftool <path>`, `--dry-run`, `--report <.json|.csv>`,
+`--log <path>`, `--no-log`, `-v`. קודי יציאה: 0 הצלחה · 1 הושלם עם שגיאות · 2 קלט לא תקין · 3 בוטל.
+
+## אריזה ל-Microsoft Store (MSIX)
+
+הבנייה ל-MSIX היא **opt-in** — בנייה רגילה נשארת unpackaged (לפיתוח). לבניית חבילה:
+
+```powershell
+dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64 -p:Packaging=true
+# הפלט: src/GPhotosTakeout.App/AppPackages/.../GPhotosTakeout.App_<ver>_x64.msix
+```
+
+האפליקציה היא **full-trust desktop** (`runFullTrust` ב-`Package.appxmanifest`) — רצה **מחוץ**
+ל-AppContainer, ולכן ExifTool וגישת הקבצים עובדים גם תחת זהות חבילה.
+
+⚠️ **לפני אריזה:** יש להניח את `exiftool.exe` + `exiftool_files/` בתיקייה
+`src/GPhotosTakeout.App/Tools/` כדי שייכללו בחבילה (כיום יש שם רק `README.txt`).
+
+⚠️ **אימות ידני נדרש (במכונה שלך):** התקנת ה-MSIX (דורש חתימה/sideloading + UAC) והרצה
+לוודא ש-ExifTool **אכן כותב EXIF תחת זהות חבילה** — זה האימות הקריטי של מסלול ה-Store.
+החתימה עצמה מטופלת ע"י החנות בהגשה.
 
 ## החלטות עיצוב מרכזיות
 

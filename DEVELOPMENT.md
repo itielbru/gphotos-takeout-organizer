@@ -299,7 +299,26 @@ checkbox ל-dry-run, ETA/throughput חי, ו-DI ידני של שירותים ל-
 מ-57 ל-**86** עוברות. נוספו: ולידציה, dry-run, ReportExporter, ETA, `LongPath`,
 `TimezoneResolver`, `AlbumLinker`, `TakeoutArchiveReader` (כולל ZIP פגום ומולטי-ארכיון).
 
-### 11.7 נותר (לא בוצע בסבב הזה)
-לוגים מובנים (Microsoft.Extensions.Logging); i18n עברית+אנגלית (צריך אימות ידני של
-החלפת שפה/RTL); מעבר ל-MSIX/Store + אימות ExifTool תחת זהות חבילה; פירוק עמוק יותר של
-ה-ViewModel (DI container מלא).
+### 11.7 לוגים מובנים
+`Microsoft.Extensions.Logging` עם `ILogger` דרך ה-`ProcessingPipeline`
+(start/index/match/errors/exif/cancel/complete); `FileLoggerProvider` מינימלי ללא תלות צד-ג'.
+ה-CLI (`--log`/`--no-log`/`-v`) וה-App (קובץ לוג פר-ריצה + כפתור "פתח לוג") כותבים לוג מתוארך.
+
+### 11.8 i18n (עברית + אנגלית)
+טבלת מחרוזות מבוססת-קוד (`AppStrings` עם `required` → שתי השפות חייבות להגדיר כל מחרוזת,
+נאכף בקומפילציה; `x:Bind` מאמת כל הפניה). ה-VM חושף `S` + `FlowDirection` ב-OneWay → החלפת
+שפה מעדכנת את כל ה-UI חי והופכת RTL↔LTR. השפה נשמרת בהגדרות; בורר בכותרת.
+⏳ החלפת שפה חיה צריכה אישור ויזואלי ידני.
+
+### 11.9 אריזת MSIX/Store
+`-p:Packaging=true` מייצר MSIX (opt-in; בנייה רגילה נשארת unpackaged). `Package.appxmanifest`
+עם `runFullTrust` (desktop מחוץ ל-AppContainer → ExifTool עובד), לוגואים ב-`Assets/`, ו-job
+ב-CI שמעלה את ה-.msix כ-artifact. **אומת:** החבילה נבנתה (90MB, 355 entries) וכוללת את
+ה-exe, ה-manifest, ו-`Tools/`.
+
+### 11.10 נותר (דורש את המכונה שלך)
+- הנחת `exiftool.exe` + `exiftool_files/` ב-`src/GPhotosTakeout.App/Tools/` כדי שייכללו בחבילה.
+- התקנת ה-MSIX (חתימה/sideloading + UAC) ואימות ש-ExifTool כותב EXIF **תחת זהות חבילה** —
+  האימות הקריטי של מסלול ה-Store.
+- החלפת שפה חיה ב-UI (אישור ויזואלי).
+- אופציונלי: DI container מלא ופירוק עמוק יותר של ה-ViewModel; drag-and-drop; מצב כהה.

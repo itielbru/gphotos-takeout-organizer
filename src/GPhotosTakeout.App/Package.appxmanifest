@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <!-- Publisher is a placeholder for local/dev signing; the Microsoft Store assigns the
+       real Identity (Name/Publisher) on submission. Version: Major.Minor.Build.Revision. -->
+  <Identity
+    Name="GPhotosTakeout.App"
+    Publisher="CN=GPhotosTakeout"
+    Version="1.0.0.0" />
+
+  <Properties>
+    <DisplayName>Google Photos Takeout Organizer</DisplayName>
+    <PublisherDisplayName>GPhotosTakeout</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="he" />
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="$targetentrypoint$">
+      <uap:VisualElements
+        DisplayName="Google Photos Takeout Organizer"
+        Description="Merges metadata, fixes dates, and organizes a Google Photos Takeout export."
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png"
+        BackgroundColor="#0D7377">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#0D7377" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- Full-trust desktop app: runs OUTSIDE the AppContainer sandbox, so it can launch
+         the bundled exiftool.exe and access files the user picks. This is what makes a
+         packaged build viable despite the original unpackaged decision. -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+</Package>
