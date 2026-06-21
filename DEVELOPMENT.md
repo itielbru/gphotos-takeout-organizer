@@ -254,3 +254,52 @@ dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -p:Platform=x64
 `src/GPhotosTakeout.App/Tools/` ולהוסיף כלל
 `<None Include="Tools\**" CopyToOutputDirectory="PreserveNewest" />` ל-`.csproj`
 כדי שיועתק אוטומטית בכל בנייה.
+
+---
+
+## 11. סבב שיפור מקיף (תוכנית רב-שלבית)
+
+מסמך התוכנית: `~/.claude/plans/jolly-honking-planet.md`. **החלטות:** הפצה = חנות
+Microsoft (MSIX, full-trust desktop — היפוך החלטת ה-unpackaged), רב-לשוניות עברית+אנגלית,
+והוספת CLI.
+
+### 11.1 תשתית ו-Tooling
+`git init`, `.gitignore`/`.gitattributes`/`.editorconfig`/`Directory.Build.props`
+(אנלייזרים + `EnforceCodeStyleInBuild`), `coverlet`, ו-CI ב-GitHub Actions
+(`.github/workflows/ci.yml`: build Core/CLI + test+coverage, build App x64).
+**Core ו-CLI נבנים תחת `TreatWarningsAsErrors`.**
+
+### 11.2 נכונות ועמידות (Core)
+- `OptionsValidator` — ולידציה מקדימה (קלט/פלט/timezone/parallelism), errors+warnings.
+- `ProcessingOptions.DryRun` — תכנון מלא ללא כתיבה.
+- `FileOutcome` פר-קובץ + `ReportExporter` (JSON/CSV).
+- `ProcessingProgress` — `ElapsedSeconds` → `ItemsPerSecond`/`EtaSeconds`.
+- גבול ללולאות `MakeUnique`/`MoveUnique` + ניקוי `.part` יתומים בכל מסלול.
+- **חוסן ExifTool:** timeout פר-קובץ (`ExifToolTimeout`); `ExifToolBatchWriter` עושה
+  fault על timeout/יציאה לא צפויה; `ExifToolPool` מחליף תהליך מת ב-fresh ושומר את ה-stderr;
+  חסימת גודל ל-stderr (64KB).
+
+### 11.3 אפליקציית WinUI3
+הצגת רשימת השגיאות בסיכום (היו מוסתרות) + ייצוא דוח (CSV/JSON), שמירת הגדרות
+(`SettingsService` ל-JSON תחת `%LocalAppData%`), ולידציה מקדימה ב-UI עם InfoBar,
+checkbox ל-dry-run, ETA/throughput חי, ו-DI ידני של שירותים ל-VM.
+
+### 11.4 CLI (`gptakeout`)
+פרויקט הרצה headless חדש, parser ללא תלויות, progress עם ETA, ביטול ב-Ctrl+C,
+`--dry-run`, `--report`, exit codes. אומת end-to-end על Takeout סינתטי.
+
+### 11.5 באגים שנמצאו ותוקנו בסבב הזה
+- 🔴 `LongPath.Extended` השאיר `/` בנתיבי `\\?\` → נתיבים מוחלטים עם קו-נטוי "לא נמצאו"
+  (הופיע בהרצת ה-CLI). תוקן: נרמול `/`→`\` לפני הוספת ה-prefix. + בדיקות.
+- 🟠 `InvariantGlobalization=true` ב-CLI ביטל את מסד אזורי-הזמן (ICU) ושבר GPS→IANA. הוסר.
+- אומת **שגוי**: `TimeZoneLookup.GetTimeZone(...).Result` אינו קריאה חוסמת — GeoTimeZone
+  סינכרונית/לא-מקוונת; `.Result` היא property. אין שם deadlock.
+
+### 11.6 בדיקות
+מ-57 ל-**86** עוברות. נוספו: ולידציה, dry-run, ReportExporter, ETA, `LongPath`,
+`TimezoneResolver`, `AlbumLinker`, `TakeoutArchiveReader` (כולל ZIP פגום ומולטי-ארכיון).
+
+### 11.7 נותר (לא בוצע בסבב הזה)
+לוגים מובנים (Microsoft.Extensions.Logging); i18n עברית+אנגלית (צריך אימות ידני של
+החלפת שפה/RTL); מעבר ל-MSIX/Store + אימות ExifTool תחת זהות חבילה; פירוק עמוק יותר של
+ה-ViewModel (DI container מלא).

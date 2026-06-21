@@ -18,7 +18,9 @@ GPhotosTakeout.sln
 │   ├─ IO/         תמיכת נתיבים ארוכים (\\?\)
 │   └─ Pipeline/   אורקסטרציה, מקביליות, resume, progress
 ├─ src/GPhotosTakeout.App/    אפליקציית WinUI3 (Unpackaged, עברית RTL)
-└─ tests/GPhotosTakeout.Tests/  57 בדיקות (matching, dates, dedup, pipeline, מקביליות)
+├─ src/GPhotosTakeout.Cli/    הרצה headless (gptakeout) — אוטומציה, batch, בדיקות E2E
+└─ tests/GPhotosTakeout.Tests/  86 בדיקות (matching, dates, dedup, pipeline, מקביליות,
+                                ולידציה, dry-run, ExifTool resilience, long-path, archives, timezone, albums)
 ```
 
 ## דרישות
@@ -40,6 +42,23 @@ dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -p:Platform=x64
 # הרצה
 ./src/GPhotosTakeout.App/bin/x64/Debug/net9.0-windows10.0.19041.0/GPhotosTakeout.App.exe
 ```
+
+## הרצה משורת פקודה (CLI)
+
+```powershell
+# תצוגה מקדימה (Dry-run) — מתכנן ומדווח בלי לכתוב כלום
+dotnet run --project src/GPhotosTakeout.Cli -- -i takeout-001.zip -o C:\Out --dry-run --report plan.json
+
+# ריצה אמיתית עם דוח CSV
+dotnet run --project src/GPhotosTakeout.Cli -- -i takeout-001.zip -i takeout-002.zip -o C:\Out --report report.csv
+
+# עזרה מלאה
+dotnet run --project src/GPhotosTakeout.Cli -- --help
+```
+
+דגלים עיקריים: `--structure yearmonth|albums|flat`, `--albums`, `--duplicates`,
+`--timezone <IANA>`, `--no-metadata`, `--exiftool <path>`, `--dry-run`, `--report <.json|.csv>`.
+קודי יציאה: 0 הצלחה · 1 הושלם עם שגיאות · 2 קלט לא תקין · 3 בוטל.
 
 ## החלטות עיצוב מרכזיות
 
