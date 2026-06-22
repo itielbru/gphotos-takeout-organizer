@@ -83,7 +83,7 @@
 GPhotosTakeout.sln
 ├─ src/GPhotosTakeout.Core/   (.NET 9 class library)
 ├─ src/GPhotosTakeout.App/    (WinUI3, Unpackaged, עברית RTL)
-└─ tests/GPhotosTakeout.Tests/ (xUnit — 57 בדיקות)
+└─ tests/GPhotosTakeout.Tests/ (xUnit — 87 בדיקות)
 ```
 
 ### רכיבי Core (קובץ → תפקיד)
@@ -157,7 +157,7 @@ GPhotosTakeout.sln
 
 | בדיקה | תוצאה |
 |-------|--------|
-| `dotnet test` | ✅ **57/57 עוברות** (matching, dates, JSON, ExifTool args, dedup, pipeline integration, concurrency) |
+| `dotnet test` | ✅ **87/87 עוברות** (matching, dates, JSON, ExifTool args, dedup, pipeline integration, concurrency) |
 | `dotnet build` (App, x64) | ✅ **0 warnings, 0 errors** |
 | שיגור האפליקציה | ✅ התהליך חי עם חלון (bootstrapper של Unpackaged WinUI3 עובד) |
 | בדיקת אינטגרציה | ✅ pipeline על ZIP סינתטי אמיתי: ארגון year/month, dedup של עותק אלבום, resume |
@@ -169,7 +169,7 @@ GPhotosTakeout.sln
 ## 8. סטטוס נוכחי ומה שנותר
 
 **הושלם:**
-- ✅ Core מלא + 57 בדיקות עוברות, כולל חסינות concurrency.
+- ✅ Core מלא + 87 בדיקות עוברות, כולל חסינות concurrency.
 - ✅ אפליקציית WinUI3 נבנית ורצה (wizard בעברית RTL, 4 שלבים).
 - ✅ **ExifTool 13.59 הותקן ואומת** (`-ver` → 13.59) — כתיבת metadata פעילה (ראה יומן סשן 2026-06-21).
 - ✅ האפליקציה הופעלה ידנית; חלון "מארגן Google Photos Takeout" עלה תקין (ללא קריסה).
@@ -296,7 +296,7 @@ checkbox ל-dry-run, ETA/throughput חי, ו-DI ידני של שירותים ל-
   סינכרונית/לא-מקוונת; `.Result` היא property. אין שם deadlock.
 
 ### 11.6 בדיקות
-מ-57 ל-**86** עוברות. נוספו: ולידציה, dry-run, ReportExporter, ETA, `LongPath`,
+מ-57 ל-**87** עוברות. נוספו: ולידציה, dry-run, ReportExporter, ETA, `LongPath`,
 `TimezoneResolver`, `AlbumLinker`, `TakeoutArchiveReader` (כולל ZIP פגום ומולטי-ארכיון).
 
 ### 11.7 לוגים מובנים

@@ -45,6 +45,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _languageIndex = lang == AppLanguage.Hebrew ? 0 : 1;
         _s = Localization.For(lang);
         _flowDirection = Localization.FlowFor(lang);
+
+        ZipFiles.CollectionChanged += OnZipFilesChanged;
+    }
+
+    private void OnZipFilesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(HasZips));
+        OnPropertyChanged(nameof(HasNoZips));
+        GoNextCommand.NotifyCanExecuteChanged();
     }
 
     public ObservableCollection<string> ZipFiles { get; } = new();
@@ -66,7 +75,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private AppLanguage CurrentLanguage => LanguageIndex == 0 ? AppLanguage.Hebrew : AppLanguage.English;
 
-    [ObservableProperty] private WizardStep _step = WizardStep.Source;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SourceVisibility))]
+    [NotifyPropertyChangedFor(nameof(OptionsVisibility))]
+    [NotifyPropertyChangedFor(nameof(ProcessingVisibility))]
+    [NotifyPropertyChangedFor(nameof(SummaryVisibility))]
+    [NotifyPropertyChangedFor(nameof(StepIndex))]
+    [NotifyPropertyChangedFor(nameof(Step2Opacity))]
+    [NotifyPropertyChangedFor(nameof(Step3Opacity))]
+    [NotifyPropertyChangedFor(nameof(Step4Opacity))]
+    [NotifyCanExecuteChangedFor(nameof(StartCommand))]
+    [NotifyCanExecuteChangedFor(nameof(GoNextCommand))]
+    private WizardStep _step = WizardStep.Source;
     [ObservableProperty] private string? _outputDirectory;
     [ObservableProperty] private string? _exifToolPath;
 
@@ -74,19 +94,51 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _outputStructureIndex;   // 0 year/month, 1 albums, 2 flat
     [ObservableProperty] private int _albumStrategyIndex;     // 0 shortcut, 1 duplicate, 2 json, 3 nothing
     [ObservableProperty] private int _duplicateHandlingIndex; // 0 keep best, 1 keep all
-    [ObservableProperty] private string? _fallbackTimeZone = "Asia/Jerusalem";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTimezoneError))]
+    private string? _fallbackTimeZone = "Asia/Jerusalem";
     [ObservableProperty] private bool _dryRun;
+
+    // Live timezone validation for Step 2 (empty is allowed — it's optional).
+    public bool HasTimezoneError =>
+        !string.IsNullOrWhiteSpace(FallbackTimeZone) && !IsValidTimeZone(FallbackTimeZone);
+
+    private static bool IsValidTimeZone(string tz)
+    {
+        try { _ = TimeZoneInfo.FindSystemTimeZoneById(tz); return true; }
+        catch (TimeZoneNotFoundException) { return false; }
+        catch (InvalidTimeZoneException) { return false; }
+    }
 
     // Validation.
     [ObservableProperty] private string? _validationMessage;
 
     // Progress.
     [ObservableProperty] private double _progressFraction;
+    [ObservableProperty] private bool _progressIndeterminate;
     [ObservableProperty] private string _phase = "";
     [ObservableProperty] private string? _currentFile;
     [ObservableProperty] private string? _etaText;
-    [ObservableProperty] private int _errorCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLiveErrors))]
+    [NotifyPropertyChangedFor(nameof(LiveErrorText))]
+    private int _errorCount;
     [ObservableProperty] private bool _isRunning;
+
+    public Visibility HasLiveErrors => Visible(ErrorCount > 0);
+    public string LiveErrorText => $"{ErrorCount} {S.LblErrors}";
+
+    // ExifTool one-click install (Step 2).
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotInstallingExifTool))]
+    [NotifyCanExecuteChangedFor(nameof(InstallExifToolCommand))]
+    private bool _isInstallingExifTool;
+    [ObservableProperty] private double _exifInstallProgress;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasInstallError))]
+    private string? _exifInstallError;
+    public bool IsNotInstallingExifTool => !IsInstallingExifTool;
+    public Visibility HasInstallError => Visible(!string.IsNullOrEmpty(ExifInstallError));
 
     // Summary.
     [ObservableProperty] private ProcessingReport? _report;
@@ -104,33 +156,36 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     partial void OnValidationMessageChanged(string? value) => OnPropertyChanged(nameof(HasValidationError));
 
+    // Status line shown above the result cards (the per-stat counts moved to cards).
     public string SummaryText
     {
         get
         {
             if (Report is not { } r)
                 return S.SummaryNoData;
-            var lines = new[]
-            {
-                r.DryRun ? S.SummaryDryRun : S.SummaryDone,
-                $"{S.LblTotal}: {r.TotalMedia}",
-                $"{S.LblMatched}: {r.Matched}",
-                $"{S.LblUnmatched}: {r.Unmatched}",
-                $"{S.LblDuplicates}: {r.Duplicates}",
-                $"{S.LblMetadata}: {r.MetadataWritten}",
-                $"{S.LblSpecial}: {r.SpecialFolderItems}",
-                $"{S.LblErrors}: {r.Errors}",
-                r.Cancelled ? S.SummaryCancelled : "",
-            };
-            return string.Join(Environment.NewLine, lines.Where(l => l.Length > 0));
+            if (r.Cancelled)
+                return S.SummaryCancelled;
+            return r.DryRun ? S.SummaryDryRun : S.SummaryDone;
         }
     }
+
+    // Result-card values (string-typed for direct TextBlock binding).
+    public string StatTotal => (Report?.TotalMedia ?? 0).ToString(CultureInfo.InvariantCulture);
+    public string StatMatched => (Report?.Matched ?? 0).ToString(CultureInfo.InvariantCulture);
+    public string StatDuplicates => (Report?.Duplicates ?? 0).ToString(CultureInfo.InvariantCulture);
+    public string StatMetadata => (Report?.MetadataWritten ?? 0).ToString(CultureInfo.InvariantCulture);
+    public string StatErrors => (Report?.Errors ?? 0).ToString(CultureInfo.InvariantCulture);
 
     partial void OnReportChanged(ProcessingReport? value)
     {
         OnPropertyChanged(nameof(SummaryText));
         OnPropertyChanged(nameof(HasErrors));
         OnPropertyChanged(nameof(CanExportReport));
+        OnPropertyChanged(nameof(StatTotal));
+        OnPropertyChanged(nameof(StatMatched));
+        OnPropertyChanged(nameof(StatDuplicates));
+        OnPropertyChanged(nameof(StatMetadata));
+        OnPropertyChanged(nameof(StatErrors));
         ExportReportCommand.NotifyCanExecuteChanged();
 
         ReportErrors.Clear();
@@ -147,17 +202,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public Visibility ProcessingVisibility => Visible(Step == WizardStep.Processing);
     public Visibility SummaryVisibility => Visible(Step == WizardStep.Summary);
 
+    public Visibility HasZips => Visible(ZipFiles.Count > 0);
+    public Visibility HasNoZips => Visible(ZipFiles.Count == 0);
+
     private static Visibility Visible(bool b) => b ? Visibility.Visible : Visibility.Collapsed;
 
-    partial void OnStepChanged(WizardStep value)
-    {
-        OnPropertyChanged(nameof(SourceVisibility));
-        OnPropertyChanged(nameof(OptionsVisibility));
-        OnPropertyChanged(nameof(ProcessingVisibility));
-        OnPropertyChanged(nameof(SummaryVisibility));
-        StartCommand.NotifyCanExecuteChanged();
-        GoNextCommand.NotifyCanExecuteChanged();
-    }
+    // Stepper header state. Step N lights up once it has been reached; dimmed otherwise.
+    public int StepIndex => (int)Step;
+    public double Step1Opacity => 1;
+    public double Step2Opacity => StepIndex >= 1 ? 1 : 0.35;
+    public double Step3Opacity => StepIndex >= 2 ? 1 : 0.35;
+    public double Step4Opacity => StepIndex >= 3 ? 1 : 0.35;
 
     public void AddZips(IEnumerable<string> paths)
     {
@@ -169,6 +224,32 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     [RelayCommand]
     private void RemoveZip(string path) => ZipFiles.Remove(path);
+
+    private bool CanInstallExifTool() => !IsInstallingExifTool;
+
+    [RelayCommand(CanExecute = nameof(CanInstallExifTool))]
+    private async Task InstallExifToolAsync()
+    {
+        IsInstallingExifTool = true;
+        ExifInstallError = null;
+        ExifInstallProgress = 0;
+        try
+        {
+            var progress = new Progress<double>(p => _dispatcher.TryEnqueue(() => ExifInstallProgress = p));
+            var path = await ExifToolInstaller.InstallAsync(progress);
+            ExifToolPath = path;
+            OnPropertyChanged(nameof(MetadataAvailable));
+            OnPropertyChanged(nameof(MetadataMissing));
+        }
+        catch (Exception ex)
+        {
+            ExifInstallError = ex.Message;
+        }
+        finally
+        {
+            IsInstallingExifTool = false;
+        }
+    }
 
     public void SetOutput(string path)
     {
@@ -246,6 +327,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IsRunning = true;
         ErrorCount = 0;
         ProgressFraction = 0;
+        ProgressIndeterminate = true;
         EtaText = null;
         StartCommand.NotifyCanExecuteChanged();
         _cts?.Dispose();
@@ -257,6 +339,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             Phase = TranslatePhase(p.Phase);
             ProgressFraction = p.Fraction;
+            ProgressIndeterminate = p.Phase != "Processing";
             CurrentFile = p.CurrentFile;
             ErrorCount = p.Errors;
             EtaText = FormatEta(p);
@@ -279,12 +362,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
             Report = new ProcessingReport
             {
                 Errors = 1,
-                ErrorMessages = new[] { "שגיאה בלתי צפויה: " + ex.Message },
+                ErrorMessages = new[] { S.UnexpectedError + ex.Message },
             };
         }
         finally
         {
             IsRunning = false;
+            ProgressIndeterminate = false;
             StartCommand.NotifyCanExecuteChanged();
             Step = WizardStep.Summary;
         }

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Brand color tokens. Overriding SystemAccentColor* recolors AccentButtonStyle and
+         other accent-driven controls to the brand teal #0D7377 (light) / a lighter teal
+         (dark) without restyling every control. -->
+    <ResourceDictionary.ThemeDictionaries>
+
+        <!-- Dark -->
+        <ResourceDictionary x:Key="Default">
+            <Color x:Key="SystemAccentColor">#14A3A8</Color>
+            <Color x:Key="SystemAccentColorLight1">#1BB8BE</Color>
+            <Color x:Key="SystemAccentColorLight2">#3DCBD0</Color>
+            <Color x:Key="SystemAccentColorLight3">#6FDADD</Color>
+            <Color x:Key="BrandAccentColor">#14A3A8</Color>
+            <SolidColorBrush x:Key="BrandAccentBrush" Color="#14A3A8" />
+            <SolidColorBrush x:Key="BrandSurfaceBrush" Color="#2C2C2C" />
+            <SolidColorBrush x:Key="BrandSurfaceAltBrush" Color="#363636" />
+            <SolidColorBrush x:Key="BrandCardStrokeBrush" Color="#33FFFFFF" />
+            <SolidColorBrush x:Key="BrandSuccessBrush" Color="#4CAF50" />
+            <SolidColorBrush x:Key="BrandWarningBrush" Color="#FFB74D" />
+            <SolidColorBrush x:Key="BrandErrorBrush" Color="#EF5350" />
+        </ResourceDictionary>
+
+        <!-- Light -->
+        <ResourceDictionary x:Key="Light">
+            <Color x:Key="SystemAccentColor">#0D7377</Color>
+            <Color x:Key="SystemAccentColorDark1">#0A5A5D</Color>
+            <Color x:Key="SystemAccentColorDark2">#084749</Color>
+            <Color x:Key="SystemAccentColorDark3">#063537</Color>
+            <Color x:Key="BrandAccentColor">#0D7377</Color>
+            <SolidColorBrush x:Key="BrandAccentBrush" Color="#0D7377" />
+            <SolidColorBrush x:Key="BrandSurfaceBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="BrandSurfaceAltBrush" Color="#F3F5F6" />
+            <SolidColorBrush x:Key="BrandCardStrokeBrush" Color="#22000000" />
+            <SolidColorBrush x:Key="BrandSuccessBrush" Color="#2E7D32" />
+            <SolidColorBrush x:Key="BrandWarningBrush" Color="#ED6C02" />
+            <SolidColorBrush x:Key="BrandErrorBrush" Color="#C62828" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="HighContrast" />
+    </ResourceDictionary.ThemeDictionaries>
+
+    <!-- Spacing & shape tokens -->
+    <x:Double x:Key="SpacingXs">4</x:Double>
+    <x:Double x:Key="SpacingS">8</x:Double>
+    <x:Double x:Key="SpacingM">16</x:Double>
+    <x:Double x:Key="SpacingL">24</x:Double>
+    <CornerRadius x:Key="CardCornerRadius">8</CornerRadius>
+
+    <!-- Typography scale -->
+    <Style x:Key="TitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style x:Key="StepTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style x:Key="BodyTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style x:Key="CaptionTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Opacity" Value="0.7" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style x:Key="FieldLabelTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- Card container -->
+    <Style x:Key="CardPanelStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource BrandSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource BrandCardStrokeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource CardCornerRadius}" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+</ResourceDictionary>

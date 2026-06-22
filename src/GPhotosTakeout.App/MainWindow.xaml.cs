@@ -4,6 +4,10 @@ using System.Linq;
 using GPhotosTakeout.App.Services;
 using GPhotosTakeout.App.ViewModels;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
@@ -20,10 +24,33 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         Vm = new MainViewModel(DispatcherQueue, new SettingsService());
-        Title = Vm.S.AppTitle;
+        Root.DataContext = Vm;
+
+        // Mica flows through the entire window — no separate title bar at all.
+        SystemBackdrop = new MicaBackdrop();
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppHeader);
+
+        // Keep header content from sliding under the caption buttons (min/max/close).
+        Root.SizeChanged += (_, _) => UpdateHeaderInset();
+        UpdateHeaderInset();
+    }
+
+    // Pushes the header content away from the caption buttons at the correct logical scale.
+    private void UpdateHeaderInset()
+    {
+        if (AppHeader.XamlRoot is not { RasterizationScale: var scale and > 0 }) return;
+        var rightLogical = AppWindow.TitleBar.RightInset / scale;
+        AppHeader.Margin = new Thickness(0, 0, rightLogical, 0);
     }
 
     private nint Hwnd => WindowNative.GetWindowHandle(this);
+
+    private void OnRemoveZip(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string path })
+            Vm.ZipFiles.Remove(path);
+    }
 
     private async void OnAddZips(object sender, RoutedEventArgs e)
     {
@@ -79,6 +106,43 @@ public sealed partial class MainWindow : Window
         {
             // best effort
         }
+    }
+
+    private void OnDragOver(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(StandardDataFormats.StorageItems))
+        {
+            e.AcceptedOperation = DataPackageOperation.Copy;
+            e.DragUIOverride.Caption = Vm.S.AddZips;
+        }
+    }
+
+    private async void OnDrop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems))
+            return;
+        var deferral = e.GetDeferral();
+        try
+        {
+            var items = await e.DataView.GetStorageItemsAsync();
+            var zips = items.OfType<StorageFile>()
+                .Where(f => f.Path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                .Select(f => f.Path);
+            Vm.AddZips(zips);
+        }
+        finally
+        {
+            deferral.Complete();
+        }
+    }
+
+    private void OnCopyErrors(object sender, RoutedEventArgs e)
+    {
+        if (Vm.ReportErrors.Count == 0)
+            return;
+        var pkg = new Windows.ApplicationModel.DataTransfer.DataPackage();
+        pkg.SetText(string.Join(Environment.NewLine, Vm.ReportErrors));
+        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(pkg);
     }
 
     private async void OnExportReport(object sender, RoutedEventArgs e)

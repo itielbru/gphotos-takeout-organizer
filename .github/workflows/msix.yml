@@ -1,0 +1,25 @@
+name: MSIX package (manual)
+
+# Opt-in only: the Store/MSIX path is kept alive but does not gate CI or releases.
+on:
+  workflow_dispatch:
+
+jobs:
+  package-msix:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build MSIX (Store, x64, unsigned)
+        run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64 -p:Packaging=true
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msix-x64
+          path: src/GPhotosTakeout.App/AppPackages/**/*.msix
