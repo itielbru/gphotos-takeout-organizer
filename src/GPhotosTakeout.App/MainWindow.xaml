@@ -73,7 +73,7 @@
             <TextBlock Text="{x:Bind Vm.S.Step1Title, Mode=OneWay}" Style="{StaticResource StepTitleTextStyle}" />
             <TextBlock Text="{x:Bind Vm.S.Step1Hint, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" />
             <Button Content="{x:Bind Vm.S.AddZips, Mode=OneWay}" Click="OnAddZips"
-                    Style="{ThemeResource AccentButtonStyle}"
+                    Style="{ThemeResource AccentButtonStyle}" AccessKey="A"
                     AutomationProperties.Name="{x:Bind Vm.S.AddZips, Mode=OneWay}" />
             <Border Style="{StaticResource CardPanelStyle}" Padding="0">
                 <Grid>
@@ -175,7 +175,23 @@
                          Message="{x:Bind Vm.S.ExifFoundMsg, Mode=OneWay}" />
                 <InfoBar IsOpen="{x:Bind Vm.MetadataMissing, Mode=OneWay}" Severity="Warning" IsClosable="False"
                          Title="{x:Bind Vm.S.ExifMissingTitle, Mode=OneWay}"
-                         Message="{x:Bind Vm.S.ExifMissingMsg, Mode=OneWay}" />
+                         Message="{x:Bind Vm.S.ExifMissingMsg, Mode=OneWay}">
+                    <InfoBar.ActionButton>
+                        <Button Content="{x:Bind Vm.S.InstallExifTool, Mode=OneWay}"
+                                Command="{x:Bind Vm.InstallExifToolCommand}"
+                                AutomationProperties.Name="{x:Bind Vm.S.InstallExifTool, Mode=OneWay}" />
+                    </InfoBar.ActionButton>
+                    <InfoBar.Content>
+                        <StackPanel Margin="0,0,0,12" Spacing="6">
+                            <ProgressBar Value="{x:Bind Vm.ExifInstallProgress, Mode=OneWay}" Maximum="1"
+                                         Visibility="{x:Bind Vm.IsInstallingExifTool, Mode=OneWay}"
+                                         AutomationProperties.Name="{x:Bind Vm.S.InstallExifTool, Mode=OneWay}" />
+                            <TextBlock Text="{x:Bind Vm.ExifInstallError, Mode=OneWay}"
+                                       Foreground="{ThemeResource BrandErrorBrush}" TextWrapping="Wrap"
+                                       Visibility="{x:Bind Vm.HasInstallError, Mode=OneWay}" />
+                        </StackPanel>
+                    </InfoBar.Content>
+                </InfoBar>
 
                 <InfoBar IsOpen="{x:Bind Vm.HasValidationError, Mode=OneWay}" Severity="Error" IsClosable="False"
                          Title="{x:Bind Vm.S.ValidationTitle, Mode=OneWay}"
@@ -201,16 +217,21 @@
                     <TextBlock Text="{x:Bind Vm.Phase, Mode=OneWay}" FontSize="15"
                                AutomationProperties.LiveSetting="Polite" />
                     <ProgressBar Value="{x:Bind Vm.ProgressFraction, Mode=OneWay}" Maximum="1" Height="8"
+                                 IsIndeterminate="{x:Bind Vm.ProgressIndeterminate, Mode=OneWay}"
                                  AutomationProperties.Name="{x:Bind Vm.S.ProgressLabel, Mode=OneWay}" />
                     <TextBlock Text="{x:Bind Vm.CurrentFile, Mode=OneWay}" Opacity="0.7"
                                TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{x:Bind Vm.EtaText, Mode=OneWay}" Opacity="0.7"
                                AutomationProperties.LiveSetting="Polite" />
+                    <TextBlock Text="{x:Bind Vm.LiveErrorText, Mode=OneWay}"
+                               Foreground="{ThemeResource BrandErrorBrush}"
+                               AutomationProperties.LiveSetting="Polite"
+                               Visibility="{x:Bind Vm.HasLiveErrors, Mode=OneWay}" />
                 </StackPanel>
             </Border>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Content="{x:Bind Vm.S.Start, Mode=OneWay}" Style="{ThemeResource AccentButtonStyle}"
-                        Command="{x:Bind Vm.StartCommand}" />
+                        AccessKey="S" Command="{x:Bind Vm.StartCommand}" />
                 <Button Content="{x:Bind Vm.S.Cancel, Mode=OneWay}" Command="{x:Bind Vm.CancelCommand}"
                         IsEnabled="{x:Bind Vm.IsRunning, Mode=OneWay}" />
                 <Button Content="{x:Bind Vm.S.Back, Mode=OneWay}" Command="{x:Bind Vm.GoBackCommand}" />
@@ -224,9 +245,35 @@
                     <EntranceThemeTransition />
                 </StackPanel.ChildrenTransitions>
                 <TextBlock Text="{x:Bind Vm.S.SummaryTitle, Mode=OneWay}" Style="{StaticResource StepTitleTextStyle}" />
-                <Border Style="{StaticResource CardPanelStyle}">
-                    <TextBlock Text="{x:Bind Vm.SummaryText, Mode=OneWay}" TextWrapping="Wrap" />
-                </Border>
+                <TextBlock Text="{x:Bind Vm.SummaryText, Mode=OneWay}" Style="{StaticResource BodyTextStyle}" />
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Style="{StaticResource CardPanelStyle}" MinWidth="120">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind Vm.StatMatched, Mode=OneWay}" FontSize="24" FontWeight="SemiBold" />
+                            <TextBlock Text="{x:Bind Vm.S.LblMatched, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardPanelStyle}" MinWidth="120">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind Vm.StatDuplicates, Mode=OneWay}" FontSize="24" FontWeight="SemiBold" />
+                            <TextBlock Text="{x:Bind Vm.S.LblDuplicates, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardPanelStyle}" MinWidth="120">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind Vm.StatMetadata, Mode=OneWay}" FontSize="24" FontWeight="SemiBold" />
+                            <TextBlock Text="{x:Bind Vm.S.LblMetadata, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardPanelStyle}" MinWidth="120">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind Vm.StatErrors, Mode=OneWay}" FontSize="24" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource BrandErrorBrush}" />
+                            <TextBlock Text="{x:Bind Vm.S.LblErrors, Mode=OneWay}" Style="{StaticResource CaptionTextStyle}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
 
                 <InfoBar IsOpen="{x:Bind Vm.HasErrors, Mode=OneWay}" Severity="Warning" IsClosable="False"
                          Title="{x:Bind Vm.S.ErrorsTitle, Mode=OneWay}">

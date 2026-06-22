@@ -87,6 +87,7 @@ public sealed class AppStrings
     public required string StepperDone { get; init; }
     public required string DropHint { get; init; }
     public required string TimezoneInvalid { get; init; }
+    public required string InstallExifTool { get; init; }
 }
 
 /// <summary>Provides the string table and flow direction for a language.</summary>
@@ -176,6 +177,7 @@ public static class Localization
         StepperDone = "סיום",
         DropHint = "גרור לכאן קובצי ZIP או לחץ \"הוסף קבצי ZIP\"",
         TimezoneInvalid = "אזור זמן לא תקין (לדוגמה: Asia/Jerusalem)",
+        InstallExifTool = "הורד והתקן ExifTool",
     };
 
     private static readonly AppStrings English = new()
@@ -246,5 +248,6 @@ public static class Localization
         StepperDone = "Done",
         DropHint = "Drag ZIP files here, or click \"Add ZIP files\"",
         TimezoneInvalid = "Invalid timezone (e.g. Asia/Jerusalem)",
+        InstallExifTool = "Download & install ExifTool",
     };
 }

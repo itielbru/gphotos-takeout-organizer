@@ -115,11 +115,30 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     // Progress.
     [ObservableProperty] private double _progressFraction;
+    [ObservableProperty] private bool _progressIndeterminate;
     [ObservableProperty] private string _phase = "";
     [ObservableProperty] private string? _currentFile;
     [ObservableProperty] private string? _etaText;
-    [ObservableProperty] private int _errorCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLiveErrors))]
+    [NotifyPropertyChangedFor(nameof(LiveErrorText))]
+    private int _errorCount;
     [ObservableProperty] private bool _isRunning;
+
+    public Visibility HasLiveErrors => Visible(ErrorCount > 0);
+    public string LiveErrorText => $"{ErrorCount} {S.LblErrors}";
+
+    // ExifTool one-click install (Step 2).
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotInstallingExifTool))]
+    [NotifyCanExecuteChangedFor(nameof(InstallExifToolCommand))]
+    private bool _isInstallingExifTool;
+    [ObservableProperty] private double _exifInstallProgress;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasInstallError))]
+    private string? _exifInstallError;
+    public bool IsNotInstallingExifTool => !IsInstallingExifTool;
+    public Visibility HasInstallError => Visible(!string.IsNullOrEmpty(ExifInstallError));
 
     // Summary.
     [ObservableProperty] private ProcessingReport? _report;
@@ -137,33 +156,36 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     partial void OnValidationMessageChanged(string? value) => OnPropertyChanged(nameof(HasValidationError));
 
+    // Status line shown above the result cards (the per-stat counts moved to cards).
     public string SummaryText
     {
         get
         {
             if (Report is not { } r)
                 return S.SummaryNoData;
-            var lines = new[]
-            {
-                r.DryRun ? S.SummaryDryRun : S.SummaryDone,
-                $"{S.LblTotal}: {r.TotalMedia}",
-                $"{S.LblMatched}: {r.Matched}",
-                $"{S.LblUnmatched}: {r.Unmatched}",
-                $"{S.LblDuplicates}: {r.Duplicates}",
-                $"{S.LblMetadata}: {r.MetadataWritten}",
-                $"{S.LblSpecial}: {r.SpecialFolderItems}",
-                $"{S.LblErrors}: {r.Errors}",
-                r.Cancelled ? S.SummaryCancelled : "",
-            };
-            return string.Join(Environment.NewLine, lines.Where(l => l.Length > 0));
+            if (r.Cancelled)
+                return S.SummaryCancelled;
+            return r.DryRun ? S.SummaryDryRun : S.SummaryDone;
         }
     }
+
+    // Result-card values (string-typed for direct TextBlock binding).
+    public string StatTotal => (Report?.TotalMedia ?? 0).ToString(CultureInfo.InvariantCulture);
+    public string StatMatched => (Report?.Matched ?? 0).ToString(CultureInfo.InvariantCulture);
+    public string StatDuplicates => (Report?.Duplicates ?? 0).ToString(CultureInfo.InvariantCulture);
+    public string StatMetadata => (Report?.MetadataWritten ?? 0).ToString(CultureInfo.InvariantCulture);
+    public string StatErrors => (Report?.Errors ?? 0).ToString(CultureInfo.InvariantCulture);
 
     partial void OnReportChanged(ProcessingReport? value)
     {
         OnPropertyChanged(nameof(SummaryText));
         OnPropertyChanged(nameof(HasErrors));
         OnPropertyChanged(nameof(CanExportReport));
+        OnPropertyChanged(nameof(StatTotal));
+        OnPropertyChanged(nameof(StatMatched));
+        OnPropertyChanged(nameof(StatDuplicates));
+        OnPropertyChanged(nameof(StatMetadata));
+        OnPropertyChanged(nameof(StatErrors));
         ExportReportCommand.NotifyCanExecuteChanged();
 
         ReportErrors.Clear();
@@ -202,6 +224,32 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     [RelayCommand]
     private void RemoveZip(string path) => ZipFiles.Remove(path);
+
+    private bool CanInstallExifTool() => !IsInstallingExifTool;
+
+    [RelayCommand(CanExecute = nameof(CanInstallExifTool))]
+    private async Task InstallExifToolAsync()
+    {
+        IsInstallingExifTool = true;
+        ExifInstallError = null;
+        ExifInstallProgress = 0;
+        try
+        {
+            var progress = new Progress<double>(p => _dispatcher.TryEnqueue(() => ExifInstallProgress = p));
+            var path = await ExifToolInstaller.InstallAsync(progress);
+            ExifToolPath = path;
+            OnPropertyChanged(nameof(MetadataAvailable));
+            OnPropertyChanged(nameof(MetadataMissing));
+        }
+        catch (Exception ex)
+        {
+            ExifInstallError = ex.Message;
+        }
+        finally
+        {
+            IsInstallingExifTool = false;
+        }
+    }
 
     public void SetOutput(string path)
     {
@@ -279,6 +327,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IsRunning = true;
         ErrorCount = 0;
         ProgressFraction = 0;
+        ProgressIndeterminate = true;
         EtaText = null;
         StartCommand.NotifyCanExecuteChanged();
         _cts?.Dispose();
@@ -290,6 +339,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             Phase = TranslatePhase(p.Phase);
             ProgressFraction = p.Fraction;
+            ProgressIndeterminate = p.Phase != "Processing";
             CurrentFile = p.CurrentFile;
             ErrorCount = p.Errors;
             EtaText = FormatEta(p);
@@ -318,6 +368,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         finally
         {
             IsRunning = false;
+            ProgressIndeterminate = false;
             StartCommand.NotifyCanExecuteChanged();
             Step = WizardStep.Summary;
         }
