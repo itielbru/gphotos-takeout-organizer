@@ -25,10 +25,23 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         Vm = new MainViewModel(DispatcherQueue, new SettingsService());
         Root.DataContext = Vm;
-        Title = Vm.S.AppTitle;
 
-        // Mica backdrop — transparent glass effect on Windows 11; graceful no-op on Win10.
+        // Mica flows through the entire window — no separate title bar at all.
         SystemBackdrop = new MicaBackdrop();
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppHeader);
+
+        // Keep header content from sliding under the caption buttons (min/max/close).
+        Root.SizeChanged += (_, _) => UpdateHeaderInset();
+        UpdateHeaderInset();
+    }
+
+    // Pushes the header content away from the caption buttons at the correct logical scale.
+    private void UpdateHeaderInset()
+    {
+        if (AppHeader.XamlRoot is not { RasterizationScale: var scale and > 0 }) return;
+        var rightLogical = AppWindow.TitleBar.RightInset / scale;
+        AppHeader.Margin = new Thickness(0, 0, rightLogical, 0);
     }
 
     private nint Hwnd => WindowNative.GetWindowHandle(this);

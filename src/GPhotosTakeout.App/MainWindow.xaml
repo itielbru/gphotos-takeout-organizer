@@ -5,8 +5,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="using:GPhotosTakeout.App.ViewModels">
 
-    <Grid x:Name="Root" FlowDirection="{x:Bind Vm.FlowDirection, Mode=OneWay}"
-          Background="Transparent" Padding="24" RowSpacing="20">
+    <Grid x:Name="Root" RequestedTheme="Dark"
+          FlowDirection="{x:Bind Vm.FlowDirection, Mode=OneWay}"
+          Background="Transparent" Padding="24,40,24,24" RowSpacing="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -14,7 +15,7 @@
         </Grid.RowDefinitions>
 
         <!-- ===================== Header ===================== -->
-        <Grid Grid.Row="0" ColumnSpacing="12">
+        <Grid x:Name="AppHeader" Grid.Row="0" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
