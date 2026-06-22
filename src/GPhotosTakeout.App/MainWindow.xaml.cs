@@ -20,6 +20,9 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         Vm = new MainViewModel(DispatcherQueue, new SettingsService());
+        // Exposes the VM via DataContext so classic {Binding} inside DataTemplates
+        // (the per-row Remove button) can reach the VM's commands and strings.
+        Root.DataContext = Vm;
         Title = Vm.S.AppTitle;
     }
 
@@ -79,6 +82,15 @@ public sealed partial class MainWindow : Window
         {
             // best effort
         }
+    }
+
+    private void OnCopyErrors(object sender, RoutedEventArgs e)
+    {
+        if (Vm.ReportErrors.Count == 0)
+            return;
+        var pkg = new Windows.ApplicationModel.DataTransfer.DataPackage();
+        pkg.SetText(string.Join(Environment.NewLine, Vm.ReportErrors));
+        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(pkg);
     }
 
     private async void OnExportReport(object sender, RoutedEventArgs e)

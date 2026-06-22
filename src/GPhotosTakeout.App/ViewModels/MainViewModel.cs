@@ -279,7 +279,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             Report = new ProcessingReport
             {
                 Errors = 1,
-                ErrorMessages = new[] { "שגיאה בלתי צפויה: " + ex.Message },
+                ErrorMessages = new[] { S.UnexpectedError + ex.Message },
             };
         }
         finally

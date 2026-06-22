@@ -35,6 +35,24 @@ jobs:
           --results-directory ./coverage
           --logger "trx;LogFileName=test-results.trx"
 
+      - name: Coverage summary
+        if: always()
+        shell: pwsh
+        run: |
+          $f = Get-ChildItem -Recurse ./coverage -Filter coverage.cobertura.xml -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $f) { Write-Warning "No coverage report found."; exit 0 }
+          [xml]$x = Get-Content $f.FullName
+          $linePct = [math]::Round([double]$x.coverage.'line-rate' * 100, 1)
+          $branchPct = [math]::Round([double]$x.coverage.'branch-rate' * 100, 1)
+          "### Code coverage" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "| Metric | Coverage |"  | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "|--------|----------|"  | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "| Line   | $linePct% |" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "| Branch | $branchPct% |" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          # To enforce a gate, fail below a threshold (set MIN_LINE to e.g. 60):
+          $min = [int]($env:MIN_LINE ?? 0)
+          if ($linePct -lt $min) { Write-Error "Line coverage $linePct% is below the $min% gate."; exit 1 }
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,22 +74,3 @@ jobs:
 
       - name: Build WinUI app (x64, unpackaged)
         run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64
-
-  package-msix:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET 9
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-
-      - name: Build MSIX (Store, x64, unsigned)
-        run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64 -p:Packaging=true
-
-      - name: Upload MSIX artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: msix-x64
-          path: src/GPhotosTakeout.App/AppPackages/**/*.msix

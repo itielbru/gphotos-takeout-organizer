@@ -34,12 +34,28 @@
                     Visibility="{x:Bind Vm.SourceVisibility, Mode=OneWay}">
             <TextBlock Text="{x:Bind Vm.S.Step1Title, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
             <TextBlock Text="{x:Bind Vm.S.Step1Hint, Mode=OneWay}" Opacity="0.8" />
-            <Button Content="{x:Bind Vm.S.AddZips, Mode=OneWay}" Click="OnAddZips" />
-            <ListView ItemsSource="{x:Bind Vm.ZipFiles, Mode=OneWay}" Height="240"
+            <Button Content="{x:Bind Vm.S.AddZips, Mode=OneWay}" Click="OnAddZips"
+                    AutomationProperties.Name="{x:Bind Vm.S.AddZips, Mode=OneWay}" />
+            <ListView ItemsSource="{x:Bind Vm.ZipFiles, Mode=OneWay}" Height="240" SelectionMode="None"
+                      AutomationProperties.Name="{x:Bind Vm.S.Step1Title, Mode=OneWay}"
                       BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="x:String">
-                        <TextBlock Text="{x:Bind}" TextTrimming="CharacterEllipsis" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{x:Bind}" VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind}" />
+                            <Button Grid.Column="1" Content="&#xE711;" FontSize="12"
+                                    FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                    Background="Transparent" BorderThickness="0" Padding="6,2"
+                                    Command="{Binding DataContext.RemoveZipCommand, ElementName=Root}"
+                                    CommandParameter="{Binding}"
+                                    AutomationProperties.Name="{Binding DataContext.S.RemoveFile, ElementName=Root}"
+                                    ToolTipService.ToolTip="{Binding DataContext.S.RemoveFile, ElementName=Root}" />
+                        </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
@@ -53,29 +69,33 @@
             <StackPanel Spacing="12">
                 <TextBlock Text="{x:Bind Vm.S.Step2Title, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
 
-                <TextBlock Text="{x:Bind Vm.S.OutputStructureLabel, Mode=OneWay}" FontWeight="SemiBold" />
-                <ComboBox SelectedIndex="{x:Bind Vm.OutputStructureIndex, Mode=TwoWay}" Width="320">
+                <TextBlock x:Name="LblStructure" Text="{x:Bind Vm.S.OutputStructureLabel, Mode=OneWay}" FontWeight="SemiBold" />
+                <ComboBox SelectedIndex="{x:Bind Vm.OutputStructureIndex, Mode=TwoWay}" Width="320"
+                          AutomationProperties.LabeledBy="{x:Bind LblStructure}">
                     <ComboBoxItem Content="{x:Bind Vm.S.StructureYearMonth, Mode=OneWay}" />
                     <ComboBoxItem Content="{x:Bind Vm.S.StructureAlbums, Mode=OneWay}" />
                     <ComboBoxItem Content="{x:Bind Vm.S.StructureFlat, Mode=OneWay}" />
                 </ComboBox>
 
-                <TextBlock Text="{x:Bind Vm.S.AlbumLabel, Mode=OneWay}" FontWeight="SemiBold" />
-                <ComboBox SelectedIndex="{x:Bind Vm.AlbumStrategyIndex, Mode=TwoWay}" Width="320">
+                <TextBlock x:Name="LblAlbum" Text="{x:Bind Vm.S.AlbumLabel, Mode=OneWay}" FontWeight="SemiBold" />
+                <ComboBox SelectedIndex="{x:Bind Vm.AlbumStrategyIndex, Mode=TwoWay}" Width="320"
+                          AutomationProperties.LabeledBy="{x:Bind LblAlbum}">
                     <ComboBoxItem Content="{x:Bind Vm.S.AlbumShortcut, Mode=OneWay}" />
                     <ComboBoxItem Content="{x:Bind Vm.S.AlbumDuplicate, Mode=OneWay}" />
                     <ComboBoxItem Content="{x:Bind Vm.S.AlbumJson, Mode=OneWay}" />
                     <ComboBoxItem Content="{x:Bind Vm.S.AlbumNothing, Mode=OneWay}" />
                 </ComboBox>
 
-                <TextBlock Text="{x:Bind Vm.S.DuplicatesLabel, Mode=OneWay}" FontWeight="SemiBold" />
-                <ComboBox SelectedIndex="{x:Bind Vm.DuplicateHandlingIndex, Mode=TwoWay}" Width="320">
+                <TextBlock x:Name="LblDuplicates" Text="{x:Bind Vm.S.DuplicatesLabel, Mode=OneWay}" FontWeight="SemiBold" />
+                <ComboBox SelectedIndex="{x:Bind Vm.DuplicateHandlingIndex, Mode=TwoWay}" Width="320"
+                          AutomationProperties.LabeledBy="{x:Bind LblDuplicates}">
                     <ComboBoxItem Content="{x:Bind Vm.S.DupKeepBest, Mode=OneWay}" />
                     <ComboBoxItem Content="{x:Bind Vm.S.DupKeepAll, Mode=OneWay}" />
                 </ComboBox>
 
-                <TextBlock Text="{x:Bind Vm.S.TimezoneLabel, Mode=OneWay}" FontWeight="SemiBold" />
+                <TextBlock x:Name="LblTimezone" Text="{x:Bind Vm.S.TimezoneLabel, Mode=OneWay}" FontWeight="SemiBold" />
                 <TextBox Text="{x:Bind Vm.FallbackTimeZone, Mode=TwoWay}" Width="320"
+                         AutomationProperties.LabeledBy="{x:Bind LblTimezone}"
                          PlaceholderText="{x:Bind Vm.S.TimezonePlaceholder, Mode=OneWay}" />
 
                 <TextBlock Text="{x:Bind Vm.S.OutputLabel, Mode=OneWay}" FontWeight="SemiBold" />
@@ -111,15 +131,19 @@
         <StackPanel Grid.Row="1" Spacing="14" VerticalAlignment="Top"
                     Visibility="{x:Bind Vm.ProcessingVisibility, Mode=OneWay}">
             <TextBlock Text="{x:Bind Vm.S.Step3Title, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
-            <TextBlock Text="{x:Bind Vm.Phase, Mode=OneWay}" FontSize="15" />
-            <ProgressBar Value="{x:Bind Vm.ProgressFraction, Mode=OneWay}" Maximum="1" Height="8" />
+            <TextBlock Text="{x:Bind Vm.Phase, Mode=OneWay}" FontSize="15"
+                       AutomationProperties.LiveSetting="Polite" />
+            <ProgressBar Value="{x:Bind Vm.ProgressFraction, Mode=OneWay}" Maximum="1" Height="8"
+                         AutomationProperties.Name="{x:Bind Vm.S.ProgressLabel, Mode=OneWay}" />
             <TextBlock Text="{x:Bind Vm.CurrentFile, Mode=OneWay}" Opacity="0.7"
                        TextTrimming="CharacterEllipsis" />
-            <TextBlock Text="{x:Bind Vm.EtaText, Mode=OneWay}" Opacity="0.7" />
+            <TextBlock Text="{x:Bind Vm.EtaText, Mode=OneWay}" Opacity="0.7"
+                       AutomationProperties.LiveSetting="Polite" />
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Content="{x:Bind Vm.S.Start, Mode=OneWay}" Style="{ThemeResource AccentButtonStyle}"
                         Command="{x:Bind Vm.StartCommand}" />
-                <Button Content="{x:Bind Vm.S.Cancel, Mode=OneWay}" Command="{x:Bind Vm.CancelCommand}" />
+                <Button Content="{x:Bind Vm.S.Cancel, Mode=OneWay}" Command="{x:Bind Vm.CancelCommand}"
+                        IsEnabled="{x:Bind Vm.IsRunning, Mode=OneWay}" />
                 <Button Content="{x:Bind Vm.S.Back, Mode=OneWay}" Command="{x:Bind Vm.GoBackCommand}" />
             </StackPanel>
         </StackPanel>
@@ -133,14 +157,20 @@
             <InfoBar IsOpen="{x:Bind Vm.HasErrors, Mode=OneWay}" Severity="Warning" IsClosable="False"
                      Title="{x:Bind Vm.S.ErrorsTitle, Mode=OneWay}">
                 <InfoBar.Content>
-                    <ListView ItemsSource="{x:Bind Vm.ReportErrors, Mode=OneWay}" MaxHeight="220" Margin="0,8,0,8"
-                              SelectionMode="None">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <TextBlock Text="{x:Bind}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                    <StackPanel Spacing="8" Margin="0,8,0,8">
+                        <ListView ItemsSource="{x:Bind Vm.ReportErrors, Mode=OneWay}" MaxHeight="220"
+                                  SelectionMode="None"
+                                  AutomationProperties.Name="{x:Bind Vm.S.ErrorsTitle, Mode=OneWay}">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <TextBlock Text="{x:Bind}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <Button Content="{x:Bind Vm.S.CopyErrors, Mode=OneWay}" Click="OnCopyErrors"
+                                AutomationProperties.Name="{x:Bind Vm.S.CopyErrors, Mode=OneWay}"
+                                HorizontalAlignment="Left" />
+                    </StackPanel>
                 </InfoBar.Content>
             </InfoBar>
 

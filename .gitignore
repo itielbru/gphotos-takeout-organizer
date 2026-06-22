@@ -48,6 +48,7 @@ BundleArtifacts/
 
 # Editor / vault
 .obsidian/
+*.canvas
 
 # OS
 Thumbs.db

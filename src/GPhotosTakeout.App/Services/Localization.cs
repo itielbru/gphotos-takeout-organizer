@@ -73,6 +73,12 @@ public sealed class AppStrings
     public required string LblMetadata { get; init; }
     public required string LblSpecial { get; init; }
     public required string LblErrors { get; init; }
+
+    // Accessibility names, crash reporting, and the per-row remove button.
+    public required string RemoveFile { get; init; }
+    public required string ProgressLabel { get; init; }
+    public required string CopyErrors { get; init; }
+    public required string UnexpectedError { get; init; }
 }
 
 /// <summary>Provides the string table and flow direction for a language.</summary>
@@ -152,6 +158,10 @@ public static class Localization
         LblMetadata = "מטא-דאטה נכתב",
         LblSpecial = "תיקיות מיוחדות",
         LblErrors = "שגיאות",
+        RemoveFile = "הסר קובץ",
+        ProgressLabel = "התקדמות העיבוד",
+        CopyErrors = "העתק שגיאות",
+        UnexpectedError = "שגיאה בלתי צפויה: ",
     };
 
     private static readonly AppStrings English = new()
@@ -212,5 +222,9 @@ public static class Localization
         LblMetadata = "Metadata written",
         LblSpecial = "Special folders",
         LblErrors = "Errors",
+        RemoveFile = "Remove file",
+        ProgressLabel = "Processing progress",
+        CopyErrors = "Copy errors",
+        UnexpectedError = "Unexpected error: ",
     };
 }

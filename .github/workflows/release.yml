@@ -1,0 +1,145 @@
+name: Release
+
+# Tag-driven portable release. Push a tag like v1.0.0 to build self-contained
+# zips for the App (win-x64 + win-arm64) and the CLI, with ExifTool bundled, and
+# attach them to a draft GitHub Release.
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  EXIFTOOL_VERSION: "13.59"
+  # SHA256 of exiftool-<EXIFTOOL_VERSION>_64.zip. Leave empty to skip enforcement
+  # (a warning is printed). To pin it, download the zip once and run:
+  #   certutil -hashfile exiftool-13.59_64.zip SHA256
+  # then paste the value here so CI fails on a tampered/changed download.
+  EXIFTOOL_SHA256: ""
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            platform: x64
+          - rid: win-arm64
+            platform: ARM64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Resolve version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = "${{ github.ref_name }}" -replace '^v',''
+          "version=$v" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Cache ExifTool
+        id: cache-exiftool
+        uses: actions/cache@v4
+        with:
+          path: src/GPhotosTakeout.App/Tools
+          key: exiftool-${{ env.EXIFTOOL_VERSION }}
+
+      - name: Fetch ExifTool
+        if: steps.cache-exiftool.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ver = $env:EXIFTOOL_VERSION
+          $zip = "exiftool-${ver}_64.zip"
+          $tools = "src/GPhotosTakeout.App/Tools"
+          New-Item -ItemType Directory -Force -Path $tools | Out-Null
+          $urls = @(
+            "https://exiftool.org/$zip",
+            "https://master.dl.sourceforge.net/project/exiftool/$zip?viasf=1"
+          )
+          $ok = $false
+          foreach ($u in $urls) {
+            try { Invoke-WebRequest -Uri $u -OutFile $zip -UseBasicParsing; $ok = $true; break }
+            catch { Write-Warning "Download failed from $u : $_" }
+          }
+          if (-not $ok) { Write-Error "Could not download ExifTool $ver"; exit 1 }
+
+          if ($env:EXIFTOOL_SHA256) {
+            $actual = (Get-FileHash $zip -Algorithm SHA256).Hash
+            if ($actual -ne $env:EXIFTOOL_SHA256.ToUpper()) {
+              Write-Error "ExifTool checksum mismatch. Expected $($env:EXIFTOOL_SHA256), got $actual"; exit 1
+            }
+            Write-Host "ExifTool checksum verified."
+          } else {
+            Write-Warning "EXIFTOOL_SHA256 is not set — skipping checksum verification. Pin it before publishing real releases."
+          }
+
+          Expand-Archive -Path $zip -DestinationPath exiftool-extract -Force
+          $root = Get-ChildItem exiftool-extract -Directory | Select-Object -First 1
+          if (-not $root) { $root = Get-Item exiftool-extract }
+          $exe = Get-ChildItem $root.FullName -Filter "exiftool*.exe" | Select-Object -First 1
+          Copy-Item $exe.FullName (Join-Path $tools "exiftool.exe") -Force
+          $files = Join-Path $root.FullName "exiftool_files"
+          if (Test-Path $files) { Copy-Item $files (Join-Path $tools "exiftool_files") -Recurse -Force }
+          # License compliance: ship ExifTool's README/license alongside the binary.
+          $readme = Get-ChildItem $root.FullName -Filter "README*" | Select-Object -First 1
+          if ($readme) { Copy-Item $readme.FullName (Join-Path $tools "exiftool-LICENSE.txt") -Force }
+
+      - name: Publish App (${{ matrix.rid }})
+        run: >
+          dotnet publish src/GPhotosTakeout.App/GPhotosTakeout.App.csproj
+          -c Release -p:Platform=${{ matrix.platform }} -r ${{ matrix.rid }}
+          --self-contained -p:WindowsPackageType=None
+          -o publish/app
+
+      - name: Publish CLI (${{ matrix.rid }})
+        run: >
+          dotnet publish src/GPhotosTakeout.Cli/GPhotosTakeout.Cli.csproj
+          -c Release -r ${{ matrix.rid }} --self-contained
+          -o publish/cli
+
+      - name: Bundle ExifTool into the CLI output
+        shell: pwsh
+        run: |
+          $tools = "src/GPhotosTakeout.App/Tools"
+          if (Test-Path $tools) { Copy-Item $tools "publish/cli/Tools" -Recurse -Force }
+
+      - name: Zip artifacts
+        shell: pwsh
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          $rid = "${{ matrix.rid }}"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path publish/app/* -DestinationPath "dist/GPhotosTakeout-App-$v-$rid.zip" -Force
+          Compress-Archive -Path publish/cli/* -DestinationPath "dist/GPhotosTakeout-CLI-$v-$rid.zip" -Force
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.rid }}
+          path: dist/*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          body_path: CHANGELOG.md
+          files: dist/*.zip
