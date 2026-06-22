@@ -10,6 +10,10 @@
 מקובצי ה-JSON חזרה לתוך התמונות (EXIF/XMP), מתקנת תאריכים ואזורי זמן, מטפלת
 בכפילויות ובאלבומים, ומפיקה ספרייה נקייה ומאורגנת. הממשק בעברית (RTL) ובאנגלית.
 
+<div align="center">
+<img src="docs/assets/wizard-he.png" alt="אשף מארגן Google Photos Takeout" width="760">
+</div>
+
 ## התקנה מהירה
 
 הורד את הגרסה האחרונה מ-[Releases](https://github.com/itielbru/gphotos-takeout-organizer/releases),

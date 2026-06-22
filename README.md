@@ -11,7 +11,7 @@
 [![Latest release](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?include_prereleases&sort=semver)](https://github.com/itielbru/gphotos-takeout-organizer/releases)
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 
-<!-- TODO: add a screenshot/GIF of the wizard here (docs/assets/hero.png) once the UI redesign lands. -->
+<img src="docs/assets/hero.png" alt="Google Photos Takeout Organizer — wizard" width="760">
 
 </div>
 
@@ -81,6 +81,14 @@ dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -p:Platform=x64
 Requires the **.NET 9 SDK**. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev setup
 (including restoring ExifTool locally) and [ARCHITECTURE.md](ARCHITECTURE.md) for the engine
 design, concurrency model, and the matching/date/timezone strategy.
+
+## Screenshots
+
+| English (LTR) | עברית (RTL) |
+|:---:|:---:|
+| ![English wizard](docs/assets/wizard-en.png) | ![Hebrew wizard](docs/assets/wizard-he.png) |
+
+The UI is fully bilingual and switchable live — the whole layout mirrors for Hebrew.
 
 ## Documentation
 
