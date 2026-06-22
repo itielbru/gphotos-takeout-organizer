@@ -90,6 +90,12 @@ design, concurrency model, and the matching/date/timezone strategy.
 
 The UI is fully bilingual and switchable live — the whole layout mirrors for Hebrew.
 
+## Issues & support
+
+Bug reports and feature requests are read and taken seriously. If something doesn't work — wrong dates, missing files, a crash — please [open an issue](https://github.com/itielbru/gphotos-takeout-organizer/issues) with as much detail as you can: OS version, which Takeout export caused the problem, and the relevant lines from the log file (`%LocalAppData%\GPhotosTakeout\logs\`). Every report gets a response.
+
+For security issues, please use [private vulnerability reporting](https://github.com/itielbru/gphotos-takeout-organizer/security/advisories/new) instead of a public issue.
+
 ## Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — engine design, concurrency model, the #353 matching trick, date/timezone hierarchy.

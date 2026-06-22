@@ -92,6 +92,12 @@ dotnet run --project src/GPhotosTakeout.Cli -- --help
   לתמונות, ו-`QuickTime:CreateDate` (UTC) לווידאו.
 - **נתיבים ארוכים (>260)** — prefix `\\?\` + `longPathAware` ב-manifest.
 
+## בעיות ותמיכה
+
+דיווחי באגים ובקשות לתכונות נקראים ומטופלים ברצינות. אם משהו לא עובד — תאריכים שגויים, קבצים חסרים, קריסה — פתחו [issue](https://github.com/itielbru/gphotos-takeout-organizer/issues) עם פרטים: גרסת Windows, איזה Takeout גרם לבעיה, ושורות רלוונטיות מקובץ הלוג (`%LocalAppData%\GPhotosTakeout\logs\`). כל דיווח מקבל מענה.
+
+לבעיות אבטחה — השתמשו ב[דיווח פרטי](https://github.com/itielbru/gphotos-takeout-organizer/security/advisories/new) במקום issue ציבורי.
+
 ## רישיון
 
 [MIT](LICENSE).
