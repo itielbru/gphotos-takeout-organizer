@@ -16,8 +16,8 @@
             <Color x:Key="SystemAccentColorLight3">#6FDADD</Color>
             <Color x:Key="BrandAccentColor">#14A3A8</Color>
             <SolidColorBrush x:Key="BrandAccentBrush" Color="#14A3A8" />
-            <SolidColorBrush x:Key="BrandSurfaceBrush" Color="#1C1C1C" />
-            <SolidColorBrush x:Key="BrandSurfaceAltBrush" Color="#262626" />
+            <SolidColorBrush x:Key="BrandSurfaceBrush" Color="#2C2C2C" />
+            <SolidColorBrush x:Key="BrandSurfaceAltBrush" Color="#363636" />
             <SolidColorBrush x:Key="BrandCardStrokeBrush" Color="#33FFFFFF" />
             <SolidColorBrush x:Key="BrandSuccessBrush" Color="#4CAF50" />
             <SolidColorBrush x:Key="BrandWarningBrush" Color="#FFB74D" />

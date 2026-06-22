@@ -6,7 +6,7 @@
     xmlns:vm="using:GPhotosTakeout.App.ViewModels">
 
     <Grid x:Name="Root" FlowDirection="{x:Bind Vm.FlowDirection, Mode=OneWay}"
-          Background="{ThemeResource BrandSurfaceAltBrush}" Padding="24" RowSpacing="20">
+          Background="Transparent" Padding="24" RowSpacing="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -97,8 +97,7 @@
                                     <Button Grid.Column="1" Content="&#xE711;" FontSize="12"
                                             FontFamily="{ThemeResource SymbolThemeFontFamily}"
                                             Background="Transparent" BorderThickness="0" Padding="6,2"
-                                            Command="{Binding DataContext.RemoveZipCommand, ElementName=Root}"
-                                            CommandParameter="{Binding}"
+                                            Tag="{x:Bind}" Click="OnRemoveZip"
                                             AutomationProperties.Name="{Binding DataContext.S.RemoveFile, ElementName=Root}"
                                             ToolTipService.ToolTip="{Binding DataContext.S.RemoveFile, ElementName=Root}" />
                                 </Grid>

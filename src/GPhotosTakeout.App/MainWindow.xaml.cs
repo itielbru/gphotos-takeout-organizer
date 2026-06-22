@@ -4,6 +4,8 @@ using System.Linq;
 using GPhotosTakeout.App.Services;
 using GPhotosTakeout.App.ViewModels;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -22,13 +24,20 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         Vm = new MainViewModel(DispatcherQueue, new SettingsService());
-        // Exposes the VM via DataContext so classic {Binding} inside DataTemplates
-        // (the per-row Remove button) can reach the VM's commands and strings.
         Root.DataContext = Vm;
         Title = Vm.S.AppTitle;
+
+        // Mica backdrop — transparent glass effect on Windows 11; graceful no-op on Win10.
+        SystemBackdrop = new MicaBackdrop();
     }
 
     private nint Hwnd => WindowNative.GetWindowHandle(this);
+
+    private void OnRemoveZip(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string path })
+            Vm.ZipFiles.Remove(path);
+    }
 
     private async void OnAddZips(object sender, RoutedEventArgs e)
     {
