@@ -45,6 +45,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _languageIndex = lang == AppLanguage.Hebrew ? 0 : 1;
         _s = Localization.For(lang);
         _flowDirection = Localization.FlowFor(lang);
+
+        ZipFiles.CollectionChanged += OnZipFilesChanged;
+    }
+
+    private void OnZipFilesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(HasZips));
+        OnPropertyChanged(nameof(HasNoZips));
+        GoNextCommand.NotifyCanExecuteChanged();
     }
 
     public ObservableCollection<string> ZipFiles { get; } = new();
@@ -66,7 +75,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private AppLanguage CurrentLanguage => LanguageIndex == 0 ? AppLanguage.Hebrew : AppLanguage.English;
 
-    [ObservableProperty] private WizardStep _step = WizardStep.Source;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SourceVisibility))]
+    [NotifyPropertyChangedFor(nameof(OptionsVisibility))]
+    [NotifyPropertyChangedFor(nameof(ProcessingVisibility))]
+    [NotifyPropertyChangedFor(nameof(SummaryVisibility))]
+    [NotifyPropertyChangedFor(nameof(StepIndex))]
+    [NotifyPropertyChangedFor(nameof(Step2Opacity))]
+    [NotifyPropertyChangedFor(nameof(Step3Opacity))]
+    [NotifyPropertyChangedFor(nameof(Step4Opacity))]
+    [NotifyCanExecuteChangedFor(nameof(StartCommand))]
+    [NotifyCanExecuteChangedFor(nameof(GoNextCommand))]
+    private WizardStep _step = WizardStep.Source;
     [ObservableProperty] private string? _outputDirectory;
     [ObservableProperty] private string? _exifToolPath;
 
@@ -74,8 +94,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _outputStructureIndex;   // 0 year/month, 1 albums, 2 flat
     [ObservableProperty] private int _albumStrategyIndex;     // 0 shortcut, 1 duplicate, 2 json, 3 nothing
     [ObservableProperty] private int _duplicateHandlingIndex; // 0 keep best, 1 keep all
-    [ObservableProperty] private string? _fallbackTimeZone = "Asia/Jerusalem";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTimezoneError))]
+    private string? _fallbackTimeZone = "Asia/Jerusalem";
     [ObservableProperty] private bool _dryRun;
+
+    // Live timezone validation for Step 2 (empty is allowed — it's optional).
+    public bool HasTimezoneError =>
+        !string.IsNullOrWhiteSpace(FallbackTimeZone) && !IsValidTimeZone(FallbackTimeZone);
+
+    private static bool IsValidTimeZone(string tz)
+    {
+        try { _ = TimeZoneInfo.FindSystemTimeZoneById(tz); return true; }
+        catch (TimeZoneNotFoundException) { return false; }
+        catch (InvalidTimeZoneException) { return false; }
+    }
 
     // Validation.
     [ObservableProperty] private string? _validationMessage;
@@ -147,17 +180,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public Visibility ProcessingVisibility => Visible(Step == WizardStep.Processing);
     public Visibility SummaryVisibility => Visible(Step == WizardStep.Summary);
 
+    public Visibility HasZips => Visible(ZipFiles.Count > 0);
+    public Visibility HasNoZips => Visible(ZipFiles.Count == 0);
+
     private static Visibility Visible(bool b) => b ? Visibility.Visible : Visibility.Collapsed;
 
-    partial void OnStepChanged(WizardStep value)
-    {
-        OnPropertyChanged(nameof(SourceVisibility));
-        OnPropertyChanged(nameof(OptionsVisibility));
-        OnPropertyChanged(nameof(ProcessingVisibility));
-        OnPropertyChanged(nameof(SummaryVisibility));
-        StartCommand.NotifyCanExecuteChanged();
-        GoNextCommand.NotifyCanExecuteChanged();
-    }
+    // Stepper header state. Step N lights up once it has been reached; dimmed otherwise.
+    public int StepIndex => (int)Step;
+    public double Step1Opacity => 1;
+    public double Step2Opacity => StepIndex >= 1 ? 1 : 0.35;
+    public double Step3Opacity => StepIndex >= 2 ? 1 : 0.35;
+    public double Step4Opacity => StepIndex >= 3 ? 1 : 0.35;
 
     public void AddZips(IEnumerable<string> paths)
     {

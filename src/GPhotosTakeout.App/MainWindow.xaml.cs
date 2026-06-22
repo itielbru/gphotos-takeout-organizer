@@ -4,6 +4,8 @@ using System.Linq;
 using GPhotosTakeout.App.Services;
 using GPhotosTakeout.App.ViewModels;
 using Microsoft.UI.Xaml;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
@@ -81,6 +83,34 @@ public sealed partial class MainWindow : Window
         catch
         {
             // best effort
+        }
+    }
+
+    private void OnDragOver(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(StandardDataFormats.StorageItems))
+        {
+            e.AcceptedOperation = DataPackageOperation.Copy;
+            e.DragUIOverride.Caption = Vm.S.AddZips;
+        }
+    }
+
+    private async void OnDrop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems))
+            return;
+        var deferral = e.GetDeferral();
+        try
+        {
+            var items = await e.DataView.GetStorageItemsAsync();
+            var zips = items.OfType<StorageFile>()
+                .Where(f => f.Path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                .Select(f => f.Path);
+            Vm.AddZips(zips);
+        }
+        finally
+        {
+            deferral.Complete();
         }
     }
 

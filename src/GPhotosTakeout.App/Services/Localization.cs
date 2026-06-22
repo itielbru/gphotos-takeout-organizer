@@ -79,6 +79,14 @@ public sealed class AppStrings
     public required string ProgressLabel { get; init; }
     public required string CopyErrors { get; init; }
     public required string UnexpectedError { get; init; }
+
+    // Stepper header (short labels).
+    public required string StepperSource { get; init; }
+    public required string StepperOptions { get; init; }
+    public required string StepperRun { get; init; }
+    public required string StepperDone { get; init; }
+    public required string DropHint { get; init; }
+    public required string TimezoneInvalid { get; init; }
 }
 
 /// <summary>Provides the string table and flow direction for a language.</summary>
@@ -162,6 +170,12 @@ public static class Localization
         ProgressLabel = "התקדמות העיבוד",
         CopyErrors = "העתק שגיאות",
         UnexpectedError = "שגיאה בלתי צפויה: ",
+        StepperSource = "מקור",
+        StepperOptions = "הגדרות",
+        StepperRun = "עיבוד",
+        StepperDone = "סיום",
+        DropHint = "גרור לכאן קובצי ZIP או לחץ \"הוסף קבצי ZIP\"",
+        TimezoneInvalid = "אזור זמן לא תקין (לדוגמה: Asia/Jerusalem)",
     };
 
     private static readonly AppStrings English = new()
@@ -226,5 +240,11 @@ public static class Localization
         ProgressLabel = "Processing progress",
         CopyErrors = "Copy errors",
         UnexpectedError = "Unexpected error: ",
+        StepperSource = "Source",
+        StepperOptions = "Options",
+        StepperRun = "Run",
+        StepperDone = "Done",
+        DropHint = "Drag ZIP files here, or click \"Add ZIP files\"",
+        TimezoneInvalid = "Invalid timezone (e.g. Asia/Jerusalem)",
     };
 }
