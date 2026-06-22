@@ -10,11 +10,9 @@ on:
 
 env:
   EXIFTOOL_VERSION: "13.59"
-  # SHA256 of exiftool-<EXIFTOOL_VERSION>_64.zip. Leave empty to skip enforcement
-  # (a warning is printed). To pin it, download the zip once and run:
-  #   certutil -hashfile exiftool-13.59_64.zip SHA256
-  # then paste the value here so CI fails on a tampered/changed download.
-  EXIFTOOL_SHA256: ""
+  # SHA256 of exiftool-<EXIFTOOL_VERSION>_64.zip (SourceForge). CI fails on mismatch.
+  # If you bump EXIFTOOL_VERSION, recompute: certutil -hashfile exiftool-<ver>_64.zip SHA256
+  EXIFTOOL_SHA256: "44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec"
 
 jobs:
   build:
@@ -56,9 +54,11 @@ jobs:
           $zip = "exiftool-${ver}_64.zip"
           $tools = "src/GPhotosTakeout.App/Tools"
           New-Item -ItemType Directory -Force -Path $tools | Out-Null
+          # SourceForge hosts every version (exiftool.org keeps only the latest, so a
+          # pinned older version 404s there); try the version-stable mirror first.
           $urls = @(
-            "https://exiftool.org/$zip",
-            "https://master.dl.sourceforge.net/project/exiftool/$zip?viasf=1"
+            "https://master.dl.sourceforge.net/project/exiftool/$zip?viasf=1",
+            "https://exiftool.org/$zip"
           )
           $ok = $false
           foreach ($u in $urls) {

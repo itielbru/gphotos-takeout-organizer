@@ -18,14 +18,15 @@ public sealed class ExifToolInstaller
 {
     public const string Version = "13.59";
 
-    // Optional SHA-256 of exiftool-<Version>_64.zip. Leave empty to skip verification;
-    // set it to enforce integrity (get it with: certutil -hashfile <zip> SHA256).
-    public const string Sha256 = "";
+    // SHA-256 of exiftool-<Version>_64.zip (SourceForge). Verified before install.
+    public const string Sha256 = "44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec";
 
+    // SourceForge hosts every version (exiftool.org keeps only the latest); try the
+    // version-stable mirror first so a pinned older version still resolves.
     private static readonly string[] Mirrors =
     {
-        $"https://exiftool.org/exiftool-{Version}_64.zip",
         $"https://master.dl.sourceforge.net/project/exiftool/exiftool-{Version}_64.zip?viasf=1",
+        $"https://exiftool.org/exiftool-{Version}_64.zip",
     };
 
     /// <summary>The folder ExifToolLocator searches (next to the executable).</summary>
