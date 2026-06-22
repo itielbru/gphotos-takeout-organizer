@@ -22,5 +22,5 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itiel/gphotos-takeout-organizer/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/itiel/gphotos-takeout-organizer/releases/tag/v1.0.0
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.0.0

@@ -6,9 +6,9 @@
 
 [English](README.md) · [עברית](README.he.md)
 
-[![CI](https://github.com/itiel/gphotos-takeout-organizer/actions/workflows/ci.yml/badge.svg)](https://github.com/itiel/gphotos-takeout-organizer/actions/workflows/ci.yml)
+[![CI](https://github.com/itielbru/gphotos-takeout-organizer/actions/workflows/ci.yml/badge.svg)](https://github.com/itielbru/gphotos-takeout-organizer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Latest release](https://img.shields.io/github/v/release/itiel/gphotos-takeout-organizer?include_prereleases&sort=semver)](https://github.com/itiel/gphotos-takeout-organizer/releases)
+[![Latest release](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?include_prereleases&sort=semver)](https://github.com/itielbru/gphotos-takeout-organizer/releases)
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 
 <!-- TODO: add a screenshot/GIF of the wizard here (docs/assets/hero.png) once the UI redesign lands. -->
@@ -35,7 +35,7 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 ## Quick start
 
-1. Download the latest portable build from [Releases](https://github.com/itiel/gphotos-takeout-organizer/releases).
+1. Download the latest portable build from [Releases](https://github.com/itielbru/gphotos-takeout-organizer/releases).
 2. Extract the ZIP and run `GPhotosTakeout.App.exe`. ExifTool is bundled.
 3. Add your Takeout ZIPs → pick options → run.
 

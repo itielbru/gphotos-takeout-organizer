@@ -16,7 +16,7 @@ send any data anywhere:
 
 Please report security issues **privately** rather than opening a public issue:
 
-- Use [GitHub's private vulnerability reporting](https://github.com/itiel/gphotos-takeout-organizer/security/advisories/new), or
+- Use [GitHub's private vulnerability reporting](https://github.com/itielbru/gphotos-takeout-organizer/security/advisories/new), or
 - Email **bru.itiel@gmail.com** with details and reproduction steps.
 
 You can expect an acknowledgement within a reasonable time. Please give us a chance to release

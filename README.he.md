@@ -12,7 +12,7 @@
 
 ## התקנה מהירה
 
-הורד את הגרסה האחרונה מ-[Releases](https://github.com/itiel/gphotos-takeout-organizer/releases),
+הורד את הגרסה האחרונה מ-[Releases](https://github.com/itielbru/gphotos-takeout-organizer/releases),
 חלץ את ה-ZIP והרץ את `GPhotosTakeout.App.exe`. ExifTool כבר מצורף.
 
 > **הערת SmartScreen:** הקובץ אינו חתום דיגיטלית, ולכן בהרצה הראשונה Windows עשוי להציג
