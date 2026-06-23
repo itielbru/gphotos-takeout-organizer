@@ -16,8 +16,17 @@
 
 ## התקנה מהירה
 
-הורד את הגרסה האחרונה מ-[Releases](https://github.com/itielbru/gphotos-takeout-organizer/releases),
-חלץ את ה-ZIP והרץ את `GPhotosTakeout.App.exe`. ExifTool כבר מצורף.
+<div align="center">
+
+[![הורד גרסה אחרונה](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?label=%D7%94%D7%95%D7%A8%D7%93%20%D7%92%D7%A8%D7%A1%D7%94%20%D7%90%D7%97%D7%A8%D7%95%D7%A0%D7%94&style=for-the-badge&logo=windows&color=0D7377)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest)
+
+**Windows 10 / 11 · ExifTool מצורף · ללא התקנה**
+
+</div>
+
+1. הורד מ-[הגרסה האחרונה](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — בחר את חבילת ה-**App** המתאימה למעבד שלך (x64 / ARM64).
+2. חלץ את ה-ZIP והרץ את `GPhotosTakeout.App.exe`. ExifTool כבר מצורף — אין צורך בהורדות נוספות.
+3. הוסף את קובצי ה-Takeout → בחר אפשרויות → הרץ.
 
 > **הערת SmartScreen:** הקובץ אינו חתום דיגיטלית, ולכן בהרצה הראשונה Windows עשוי להציג
 > אזהרה. לחץ **More info → Run anyway** כדי להמשיך.

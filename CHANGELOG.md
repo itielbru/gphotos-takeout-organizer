@@ -6,7 +6,7 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-06-22
+## [1.0.0] - 2026-06-23
 
 ### Added
 - Core engine: metadata re-merge into EXIF/XMP via ExifTool (`-stay_open` batch mode + pool).

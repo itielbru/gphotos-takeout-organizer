@@ -37,11 +37,18 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 <div align="center">
 
-[![Download for Windows (x64)](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?label=Download%20for%20Windows%20%28x64%29&style=for-the-badge&logo=windows&color=0D7377)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest/download/GPhotosTakeout-App-1.0.0-win-x64.zip)
+[![Download latest release](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?label=Download%20latest&style=for-the-badge&logo=windows&color=0D7377)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest)
+
+**Windows 10 / 11 · ExifTool bundled · no installer**
+
+| | Desktop app (wizard) | Command line |
+|:--|:--|:--|
+| **x64** (Intel/AMD) | [App ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [CLI ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
+| **ARM64** (Snapdragon) | [App ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [CLI ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
 
 </div>
 
-1. Click the button above (or pick a version from [Releases](https://github.com/itielbru/gphotos-takeout-organizer/releases)).
+1. Download from the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — pick the **App** ZIP for your CPU.
 2. Extract the ZIP and run `GPhotosTakeout.App.exe`. **ExifTool is included** — no extra downloads needed.
 3. Add your Takeout ZIPs → pick options → run.
 
