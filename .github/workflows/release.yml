@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup .NET 9
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
 
@@ -60,22 +60,33 @@ jobs:
             "https://master.dl.sourceforge.net/project/exiftool/$zip?viasf=1",
             "https://exiftool.org/$zip"
           )
+          # Retry loop: SourceForge CDN occasionally serves stale/wrong content.
+          # We re-attempt up to 3 times across all mirrors before giving up.
+          $maxAttempts = 3
           $ok = $false
-          foreach ($u in $urls) {
-            try { Invoke-WebRequest -Uri $u -OutFile $zip -UseBasicParsing; $ok = $true; break }
-            catch { Write-Warning "Download failed from $u : $_" }
-          }
-          if (-not $ok) { Write-Error "Could not download ExifTool $ver"; exit 1 }
-
-          if ($env:EXIFTOOL_SHA256) {
-            $actual = (Get-FileHash $zip -Algorithm SHA256).Hash
-            if ($actual -ne $env:EXIFTOOL_SHA256.ToUpper()) {
-              Write-Error "ExifTool checksum mismatch. Expected $($env:EXIFTOOL_SHA256), got $actual"; exit 1
+          for ($attempt = 1; $attempt -le $maxAttempts -and -not $ok; $attempt++) {
+            foreach ($u in $urls) {
+              try {
+                Write-Host "Attempt $attempt — downloading from $u"
+                Invoke-WebRequest -Uri $u -OutFile $zip -UseBasicParsing
+                if ($env:EXIFTOOL_SHA256) {
+                  $actual = (Get-FileHash $zip -Algorithm SHA256).Hash
+                  if ($actual -ne $env:EXIFTOOL_SHA256.ToUpper()) {
+                    Write-Warning "Hash mismatch from $u (attempt $attempt): expected $($env:EXIFTOOL_SHA256), got $actual — retrying"
+                    Remove-Item $zip -Force -ErrorAction SilentlyContinue
+                    continue
+                  }
+                  Write-Host "ExifTool checksum verified."
+                } else {
+                  Write-Warning "EXIFTOOL_SHA256 is not set — skipping checksum verification."
+                }
+                $ok = $true; break
+              }
+              catch { Write-Warning "Download failed from $u (attempt $attempt): $_" }
             }
-            Write-Host "ExifTool checksum verified."
-          } else {
-            Write-Warning "EXIFTOOL_SHA256 is not set — skipping checksum verification. Pin it before publishing real releases."
+            if (-not $ok -and $attempt -lt $maxAttempts) { Start-Sleep -Seconds 15 }
           }
+          if (-not $ok) { Write-Error "Could not download ExifTool $ver after $maxAttempts attempts"; exit 1 }
 
           Expand-Archive -Path $zip -DestinationPath exiftool-extract -Force
           $root = Get-ChildItem exiftool-extract -Directory | Select-Object -First 1
