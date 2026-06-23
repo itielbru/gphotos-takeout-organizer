@@ -8,7 +8,7 @@ jobs:
   package-msix:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v4
@@ -19,7 +19,7 @@ jobs:
         run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64 -p:Packaging=true
 
       - name: Upload MSIX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: msix-x64
           path: src/GPhotosTakeout.App/AppPackages/**/*.msix

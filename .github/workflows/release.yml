@@ -25,7 +25,7 @@ jobs:
           - rid: win-arm64
             platform: ARM64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v4
@@ -41,7 +41,7 @@ jobs:
 
       - name: Cache ExifTool
         id: cache-exiftool
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: src/GPhotosTakeout.App/Tools
           key: exiftool-${{ env.EXIFTOOL_VERSION }}
@@ -117,7 +117,7 @@ jobs:
           Compress-Archive -Path publish/cli/* -DestinationPath "dist/GPhotosTakeout-CLI-$v-$rid.zip" -Force
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.rid }}
           path: dist/*.zip
@@ -128,16 +128,16 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
 
       - name: Create draft release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           generate_release_notes: true
