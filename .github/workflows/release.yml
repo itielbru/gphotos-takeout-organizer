@@ -117,7 +117,7 @@ jobs:
           Compress-Archive -Path publish/cli/* -DestinationPath "dist/GPhotosTakeout-CLI-$v-$rid.zip" -Force
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.rid }}
           path: dist/*.zip
