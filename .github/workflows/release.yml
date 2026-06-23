@@ -56,9 +56,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path $tools | Out-Null
           # SourceForge hosts every version (exiftool.org keeps only the latest, so a
           # pinned older version 404s there); try the version-stable mirror first.
+          # NB: ${zip} braces are required — "$zip?viasf=1" makes PowerShell parse
+          # "$zip?viasf" as a (nonexistent) variable name, mangling the URL.
           $urls = @(
-            "https://master.dl.sourceforge.net/project/exiftool/$zip?viasf=1",
-            "https://exiftool.org/$zip"
+            "https://master.dl.sourceforge.net/project/exiftool/${zip}?viasf=1",
+            "https://exiftool.org/${zip}"
           )
           # Retry loop: SourceForge CDN occasionally serves stale/wrong content.
           # We re-attempt up to 3 times across all mirrors before giving up.

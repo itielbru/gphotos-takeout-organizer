@@ -18,6 +18,12 @@
     <AnalysisLevel>latest-Recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
+    <!-- CA1873: "argument may be expensive if logging is disabled." Microsoft.Extensions.Logging
+         10.x ships this analyzer; our LogInformation calls pass only cheap values (counts, ints,
+         bools, property reads), so there is nothing to defer. Suppressed solution-wide to keep
+         it from breaking TreatWarningsAsErrors builds. -->
+    <NoWarn>$(NoWarn);CA1873</NoWarn>
+
     <!-- Warnings-as-errors is opt-in per project (set in each .csproj) so the WinUI
          App's generated code doesn't break the build. Flip CoreWarningsAsErrors to
          tighten Core/Cli/Tests once the analyzer backlog is clean. -->
