@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-25
+
 ### Changed
 - Releases now ship a single self-contained `.exe` per target (App and CLI, x64 + ARM64)
   instead of zips — download one file and run it, no extraction.
@@ -30,5 +32,6 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.1.0
 [1.0.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.0.0
