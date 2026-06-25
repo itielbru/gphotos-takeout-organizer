@@ -1,18 +1,15 @@
 name: Release
 
-# Tag-driven portable release. Push a tag like v1.0.0 to build self-contained
-# zips for the App (win-x64 + win-arm64) and the CLI, with ExifTool bundled, and
-# attach them to a draft GitHub Release.
+# Tag-driven portable release. Push a tag like v1.0.0 to build single-file,
+# self-contained EXEs for the App and the CLI (win-x64 + win-arm64) and attach
+# them to a draft GitHub Release. No zips: each artifact is one downloadable .exe.
+# ExifTool is not bundled — the App installs it on first run with one click (into
+# %LocalAppData%\GPhotosTakeout\Tools), and the CLI reuses that install or takes
+# an explicit --exiftool path.
 on:
   push:
     tags:
       - 'v*'
-
-env:
-  EXIFTOOL_VERSION: "13.59"
-  # SHA256 of exiftool-<EXIFTOOL_VERSION>_64.zip (SourceForge). CI fails on mismatch.
-  # If you bump EXIFTOOL_VERSION, recompute: certutil -hashfile exiftool-<ver>_64.zip SHA256
-  EXIFTOOL_SHA256: "44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec"
 
 jobs:
   build:
@@ -39,101 +36,35 @@ jobs:
           $v = "${{ github.ref_name }}" -replace '^v',''
           "version=$v" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-      - name: Cache ExifTool
-        id: cache-exiftool
-        uses: actions/cache@v6
-        with:
-          path: src/GPhotosTakeout.App/Tools
-          key: exiftool-${{ env.EXIFTOOL_VERSION }}
-
-      - name: Fetch ExifTool
-        if: steps.cache-exiftool.outputs.cache-hit != 'true'
-        shell: pwsh
-        run: |
-          $ver = $env:EXIFTOOL_VERSION
-          $zip = "exiftool-${ver}_64.zip"
-          $tools = "src/GPhotosTakeout.App/Tools"
-          New-Item -ItemType Directory -Force -Path $tools | Out-Null
-          # SourceForge hosts every version (exiftool.org keeps only the latest, so a
-          # pinned older version 404s there); try the version-stable mirror first.
-          # NB: ${zip} braces are required — "$zip?viasf=1" makes PowerShell parse
-          # "$zip?viasf" as a (nonexistent) variable name, mangling the URL.
-          $urls = @(
-            "https://master.dl.sourceforge.net/project/exiftool/${zip}?viasf=1",
-            "https://exiftool.org/${zip}"
-          )
-          # Retry loop: SourceForge CDN occasionally serves stale/wrong content.
-          # We re-attempt up to 3 times across all mirrors before giving up.
-          $maxAttempts = 3
-          $ok = $false
-          for ($attempt = 1; $attempt -le $maxAttempts -and -not $ok; $attempt++) {
-            foreach ($u in $urls) {
-              try {
-                Write-Host "Attempt $attempt — downloading from $u"
-                Invoke-WebRequest -Uri $u -OutFile $zip -UseBasicParsing
-                if ($env:EXIFTOOL_SHA256) {
-                  $actual = (Get-FileHash $zip -Algorithm SHA256).Hash
-                  if ($actual -ne $env:EXIFTOOL_SHA256.ToUpper()) {
-                    Write-Warning "Hash mismatch from $u (attempt $attempt): expected $($env:EXIFTOOL_SHA256), got $actual — retrying"
-                    Remove-Item $zip -Force -ErrorAction SilentlyContinue
-                    continue
-                  }
-                  Write-Host "ExifTool checksum verified."
-                } else {
-                  Write-Warning "EXIFTOOL_SHA256 is not set — skipping checksum verification."
-                }
-                $ok = $true; break
-              }
-              catch { Write-Warning "Download failed from $u (attempt $attempt): $_" }
-            }
-            if (-not $ok -and $attempt -lt $maxAttempts) { Start-Sleep -Seconds 15 }
-          }
-          if (-not $ok) { Write-Error "Could not download ExifTool $ver after $maxAttempts attempts"; exit 1 }
-
-          Expand-Archive -Path $zip -DestinationPath exiftool-extract -Force
-          $root = Get-ChildItem exiftool-extract -Directory | Select-Object -First 1
-          if (-not $root) { $root = Get-Item exiftool-extract }
-          $exe = Get-ChildItem $root.FullName -Filter "exiftool*.exe" | Select-Object -First 1
-          Copy-Item $exe.FullName (Join-Path $tools "exiftool.exe") -Force
-          $files = Join-Path $root.FullName "exiftool_files"
-          if (Test-Path $files) { Copy-Item $files (Join-Path $tools "exiftool_files") -Recurse -Force }
-          # License compliance: ship ExifTool's README/license alongside the binary.
-          $readme = Get-ChildItem $root.FullName -Filter "README*" | Select-Object -First 1
-          if ($readme) { Copy-Item $readme.FullName (Join-Path $tools "exiftool-LICENSE.txt") -Force }
-
-      - name: Publish App (${{ matrix.rid }})
+      - name: Publish App single-file (${{ matrix.rid }})
         run: >
           dotnet publish src/GPhotosTakeout.App/GPhotosTakeout.App.csproj
           -c Release -p:Platform=${{ matrix.platform }} -r ${{ matrix.rid }}
-          --self-contained -p:WindowsPackageType=None
+          --self-contained -p:WindowsPackageType=None -p:PublishSingleFile=true
           -o publish/app
 
-      - name: Publish CLI (${{ matrix.rid }})
+      - name: Publish CLI single-file (${{ matrix.rid }})
         run: >
           dotnet publish src/GPhotosTakeout.Cli/GPhotosTakeout.Cli.csproj
           -c Release -r ${{ matrix.rid }} --self-contained
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=embedded
           -o publish/cli
 
-      - name: Bundle ExifTool into the CLI output
-        shell: pwsh
-        run: |
-          $tools = "src/GPhotosTakeout.App/Tools"
-          if (Test-Path $tools) { Copy-Item $tools "publish/cli/Tools" -Recurse -Force }
-
-      - name: Zip artifacts
+      - name: Stage release EXEs (${{ matrix.rid }})
         shell: pwsh
         run: |
           $v = "${{ steps.ver.outputs.version }}"
           $rid = "${{ matrix.rid }}"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Compress-Archive -Path publish/app/* -DestinationPath "dist/GPhotosTakeout-App-$v-$rid.zip" -Force
-          Compress-Archive -Path publish/cli/* -DestinationPath "dist/GPhotosTakeout-CLI-$v-$rid.zip" -Force
+          Copy-Item "publish/app/GPhotosTakeout.App.exe" "dist/GPhotosTakeout-App-$v-$rid.exe" -Force
+          Copy-Item "publish/cli/gptakeout.exe"          "dist/gptakeout-$v-$rid.exe" -Force
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.rid }}
-          path: dist/*.zip
+          path: dist/*.exe
 
   release:
     needs: build
@@ -155,4 +86,4 @@ jobs:
           draft: true
           generate_release_notes: true
           body_path: CHANGELOG.md
-          files: dist/*.zip
+          files: dist/*.exe

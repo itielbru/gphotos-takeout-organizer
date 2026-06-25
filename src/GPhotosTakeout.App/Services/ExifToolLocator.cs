@@ -4,9 +4,10 @@ using System.IO;
 namespace GPhotosTakeout.App.Services;
 
 /// <summary>
-/// Finds the bundled exiftool.exe. Convention: a "Tools" folder next to the app
-/// executable (the project ships ExifTool there). Returns null when absent so the
-/// UI can warn that metadata writing is unavailable.
+/// Finds exiftool.exe. Checks the per-user install folder first (where the one-click
+/// installer writes it — see <see cref="ExifToolInstaller.TargetDir"/>), then a "Tools"
+/// folder next to the executable for folder-based/dev installs. Returns null when absent
+/// so the UI can warn that metadata writing is unavailable.
 /// </summary>
 public static class ExifToolLocator
 {
@@ -15,6 +16,7 @@ public static class ExifToolLocator
         var baseDir = AppContext.BaseDirectory;
         var candidates = new[]
         {
+            Path.Combine(ExifToolInstaller.TargetDir, "exiftool.exe"),
             Path.Combine(baseDir, "Tools", "exiftool.exe"),
             Path.Combine(baseDir, "exiftool.exe"),
         };

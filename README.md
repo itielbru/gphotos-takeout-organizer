@@ -39,7 +39,7 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 [![Download latest release](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?label=Download%20latest&style=for-the-badge&logo=windows&color=0D7377)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest)
 
-**Windows 10 / 11 · ExifTool bundled · no installer**
+**Windows 10 / 11 · single .exe · no installer · no zip**
 
 | | Desktop app (wizard) | Command line |
 |:--|:--|:--|
@@ -48,8 +48,8 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 </div>
 
-1. Download from the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — pick the **App** ZIP for your CPU.
-2. Extract the ZIP and run `GPhotosTakeout.App.exe`. **ExifTool is included** — no extra downloads needed.
+1. Download from the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — pick the **App** `.exe` for your CPU (x64 / ARM64). It's a single self-contained file — no zip, no install.
+2. Run `GPhotosTakeout-App-…-x64.exe`. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download). Everything else works without it.
 3. Add your Takeout ZIPs → pick options → run.
 
 > **SmartScreen note:** the executable is not code-signed, so on first run Windows
@@ -76,7 +76,9 @@ Key flags: `--structure yearmonth|albums|flat`, `--albums`, `--duplicates`,
 
 ## ExifTool
 
-The portable release bundles a pinned [ExifTool](https://exiftool.org) build. When building
+The app installs a pinned [ExifTool](https://exiftool.org) build on first run with one click
+(into `%LocalAppData%\GPhotosTakeout\Tools`), so the download stays a single small `.exe`.
+The CLI reuses that install automatically, or you can pass `--exiftool <path>`. When building
 from source, download `exiftool.exe` and place it (with its `exiftool_files/` folder) under
 `Tools/` next to the executable. Without ExifTool the app still organizes and dates files,
 but won't write metadata into them.

@@ -20,12 +20,12 @@
 
 [![הורד גרסה אחרונה](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?label=%D7%94%D7%95%D7%A8%D7%93%20%D7%92%D7%A8%D7%A1%D7%94%20%D7%90%D7%97%D7%A8%D7%95%D7%A0%D7%94&style=for-the-badge&logo=windows&color=0D7377)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest)
 
-**Windows 10 / 11 · ExifTool מצורף · ללא התקנה**
+**Windows 10 / 11 · קובץ EXE יחיד · ללא התקנה · ללא ZIP**
 
 </div>
 
-1. הורד מ-[הגרסה האחרונה](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — בחר את חבילת ה-**App** המתאימה למעבד שלך (x64 / ARM64).
-2. חלץ את ה-ZIP והרץ את `GPhotosTakeout.App.exe`. ExifTool כבר מצורף — אין צורך בהורדות נוספות.
+1. הורד מ-[הגרסה האחרונה](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — בחר את קובץ ה-**App** מסוג `.exe` המתאים למעבד שלך (x64 / ARM64). זהו קובץ יחיד עצמאי — בלי ZIP ובלי התקנה.
+2. הרץ את `GPhotosTakeout-App-…-x64.exe`. בהרצה הראשונה לחץ על **התקן את ExifTool** כדי לאפשר כתיבת מטא-דאטה (הורדה חד-פעמית של ~10MB). כל שאר היכולות עובדות גם בלעדיו.
 3. הוסף את קובצי ה-Takeout → בחר אפשרויות → הרץ.
 
 > **הערת SmartScreen:** הקובץ אינו חתום דיגיטלית, ולכן בהרצה הראשונה Windows עשוי להציג
@@ -55,7 +55,7 @@ GPhotosTakeout.sln
 ## דרישות
 
 - **.NET 9 SDK** (לבנייה מהמקור).
-- **ExifTool** — מצורף לגרסאות המוכנות. לבנייה מהמקור, הורד את `exiftool.exe` מ-https://exiftool.org
+- **ExifTool** — מותקן בלחיצה אחת מתוך האפליקציה בהרצה הראשונה (אל `%LocalAppData%\GPhotosTakeout\Tools`). לבנייה מהמקור, הורד את `exiftool.exe` מ-https://exiftool.org
   והנח אותו בתיקיית `Tools/` שליד קובץ ההרצה. ללא ExifTool, האפליקציה עדיין מארגנת
   ומתארכת קבצים, אך לא כותבת metadata לתוך הקבצים.
 
