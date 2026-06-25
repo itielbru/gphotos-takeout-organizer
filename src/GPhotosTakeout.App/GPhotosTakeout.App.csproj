@@ -33,6 +33,21 @@
     <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
   </PropertyGroup>
 
+  <!-- Single-file EXE publish (opt-in via -p:PublishSingleFile=true). Produces ONE
+       self-contained .exe so users download a single file instead of a zip — deps
+       self-extract to a temp dir on first launch. WinUI 3 requires the unpackaged +
+       self-contained model with EnableMsixTooling + IncludeAllContentForSelfExtract;
+       see https://learn.microsoft.com/windows/apps/package-and-deploy/unpackage-winui-app#single-file-exe
+       (Because BaseDirectory is then a temp dir, ExifTool installs to LocalAppData —
+       see ExifToolInstaller.) Guarded so a plain `dotnet build` stays unaffected. -->
+  <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
+    <SelfContained>true</SelfContained>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <!-- Embed symbols so the publish output is a single artifact (no loose .pdb). -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4948" />

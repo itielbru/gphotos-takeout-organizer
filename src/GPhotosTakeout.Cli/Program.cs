@@ -141,8 +141,14 @@ return report.Cancelled ? ExitCancelled : report.Errors > 0 ? ExitErrors : ExitO
 static string? LocateExifTool()
 {
     var baseDir = AppContext.BaseDirectory;
+    // Per-user folder the GUI's one-click installer writes to — lets the CLI reuse an
+    // ExifTool the App already downloaded. Kept in sync with App's ExifToolInstaller.
+    var sharedTools = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "GPhotosTakeout", "Tools");
     string[] candidates =
     [
+        Path.Combine(sharedTools, "exiftool.exe"),
         Path.Combine(baseDir, "Tools", "exiftool.exe"),
         Path.Combine(baseDir, "exiftool.exe"),
     ];

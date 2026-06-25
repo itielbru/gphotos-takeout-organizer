@@ -29,8 +29,16 @@ public sealed class ExifToolInstaller
         $"https://exiftool.org/exiftool-{Version}_64.zip",
     };
 
-    /// <summary>The folder ExifToolLocator searches (next to the executable).</summary>
-    public static string TargetDir => Path.Combine(AppContext.BaseDirectory, "Tools");
+    /// <summary>
+    /// Where ExifTool is installed: a stable per-user folder under LocalAppData.
+    /// This must NOT be <see cref="AppContext.BaseDirectory"/>: for the single-file
+    /// (PublishSingleFile) build, BaseDirectory is a temp self-extract directory that
+    /// changes per app version and may be cleaned up — an install there wouldn't persist.
+    /// LocalAppData survives app updates, so ExifTool is downloaded only once.
+    /// </summary>
+    public static string TargetDir => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "GPhotosTakeout", "Tools");
 
     /// <summary>Downloads + installs ExifTool. Returns the resulting exiftool.exe path.</summary>
     public static async Task<string> InstallAsync(IProgress<double>? progress, CancellationToken ct = default)
