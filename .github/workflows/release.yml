@@ -41,7 +41,7 @@ jobs:
 
       - name: Cache ExifTool
         id: cache-exiftool
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: src/GPhotosTakeout.App/Tools
           key: exiftool-${{ env.EXIFTOOL_VERSION }}
