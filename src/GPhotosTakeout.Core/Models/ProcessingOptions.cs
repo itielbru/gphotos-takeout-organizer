@@ -36,6 +36,8 @@ public enum DuplicateHandling
 /// <summary>All user-chosen settings for one processing run.</summary>
 public sealed record ProcessingOptions
 {
+    /// <summary>Default IANA timezone used when a photo has no GPS and the user hasn't overridden it.</summary>
+    public const string DefaultFallbackTimeZone = "Asia/Jerusalem";
     public required IReadOnlyList<string> InputZipPaths { get; init; }
     public required string OutputDirectory { get; init; }
 

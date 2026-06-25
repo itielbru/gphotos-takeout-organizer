@@ -21,7 +21,7 @@ namespace GPhotosTakeout.Core.Metadata;
 public sealed class ExifToolBatchWriter : IAsyncDisposable
 {
     private const string Sentinel = "{ready}";
-    private const int MaxErrorBufferChars = 64 * 1024;
+    private const int MaxErrorBufferChars = 256 * 1024;
     private static readonly HashSet<string> VideoExtensions =
         new(StringComparer.OrdinalIgnoreCase) { ".mp4", ".mov", ".m4v", ".mp", ".mv", ".3gp" };
 

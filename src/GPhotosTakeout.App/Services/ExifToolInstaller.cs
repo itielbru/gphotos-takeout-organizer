@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -40,20 +41,73 @@ public sealed class ExifToolInstaller
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "GPhotosTakeout", "Tools");
 
-    /// <summary>Downloads + installs ExifTool. Returns the resulting exiftool.exe path.</summary>
+    /// <summary>
+    /// Returns the version string reported by the installed exiftool.exe (e.g. "13.59"),
+    /// or null if it is not installed or does not respond.
+    /// </summary>
+    public static async Task<string?> GetInstalledVersionAsync(CancellationToken ct = default)
+    {
+        var exe = Path.Combine(TargetDir, "exiftool.exe");
+        if (!File.Exists(exe))
+            return null;
+        try
+        {
+            using var proc = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = exe,
+                    ArgumentList = { "-ver" },
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                },
+            };
+            proc.Start();
+            var ver = (await proc.StandardOutput.ReadToEndAsync(ct).ConfigureAwait(false)).Trim();
+            await proc.WaitForExitAsync(ct).ConfigureAwait(false);
+            return string.IsNullOrWhiteSpace(ver) ? null : ver;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Returns true when the installed exiftool.exe reports a different version than the
+    /// pinned <see cref="Version"/> constant, indicating an update should be offered.
+    /// </summary>
+    public static async Task<bool> IsUpdateAvailableAsync(CancellationToken ct = default)
+    {
+        var installed = await GetInstalledVersionAsync(ct).ConfigureAwait(false);
+        return installed is not null && !installed.Equals(Version, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Downloads + installs ExifTool. Returns the resulting exiftool.exe path.
+    /// Uses an atomic temp-then-replace strategy so the existing installation is
+    /// preserved if the download or checksum verification fails.
+    /// </summary>
     public static async Task<string> InstallAsync(IProgress<double>? progress, CancellationToken ct = default)
     {
         Directory.CreateDirectory(TargetDir);
         var tmpZip = Path.Combine(Path.GetTempPath(), $"exiftool-{Version}-{Guid.NewGuid():N}.zip");
+        var tmpExe = Path.Combine(TargetDir, $"exiftool-new-{Guid.NewGuid():N}.exe");
         try
         {
             await DownloadAsync(tmpZip, progress, ct).ConfigureAwait(false);
             VerifyChecksum(tmpZip);
-            ExtractInto(tmpZip, TargetDir);
+            ExtractExeInto(tmpZip, tmpExe);
+            // Atomically replace the existing exe only after the new one is verified.
+            File.Move(tmpExe, Path.Combine(TargetDir, "exiftool.exe"), overwrite: true);
             var exe = Path.Combine(TargetDir, "exiftool.exe");
-            if (!File.Exists(exe))
-                throw new FileNotFoundException("The downloaded archive did not contain exiftool.exe.");
             return exe;
+        }
+        catch
+        {
+            try { if (File.Exists(tmpExe)) File.Delete(tmpExe); } catch { /* best effort */ }
+            throw;
         }
         finally
         {
@@ -103,7 +157,11 @@ public sealed class ExifToolInstaller
             throw new InvalidOperationException($"ExifTool checksum mismatch (expected {Sha256}, got {hash}).");
     }
 
-    private static void ExtractInto(string zip, string targetDir)
+    /// <summary>
+    /// Extracts the standalone exiftool EXE from the downloaded ZIP into <paramref name="destExe"/>.
+    /// Companion files (exiftool_files/, LICENSE) are placed next to the final install location.
+    /// </summary>
+    private static void ExtractExeInto(string zip, string destExe)
     {
         var extract = Path.Combine(Path.GetTempPath(), $"exiftool-x-{Guid.NewGuid():N}");
         try
@@ -112,15 +170,16 @@ public sealed class ExifToolInstaller
             var root = Directory.GetDirectories(extract).FirstOrDefault() ?? extract;
             var exe = Directory.GetFiles(root, "exiftool*.exe").FirstOrDefault()
                       ?? throw new FileNotFoundException("exiftool executable not found in archive.");
-            File.Copy(exe, Path.Combine(targetDir, "exiftool.exe"), overwrite: true);
+            File.Copy(exe, destExe, overwrite: true);
 
+            // Companion files go beside the final exe (TargetDir), not beside the temp file.
             var filesDir = Path.Combine(root, "exiftool_files");
             if (Directory.Exists(filesDir))
-                CopyDir(filesDir, Path.Combine(targetDir, "exiftool_files"));
+                CopyDir(filesDir, Path.Combine(TargetDir, "exiftool_files"));
 
             var readme = Directory.GetFiles(root, "README*").FirstOrDefault();
             if (readme is not null)
-                File.Copy(readme, Path.Combine(targetDir, "exiftool-LICENSE.txt"), overwrite: true);
+                File.Copy(readme, Path.Combine(TargetDir, "exiftool-LICENSE.txt"), overwrite: true);
         }
         finally
         {
