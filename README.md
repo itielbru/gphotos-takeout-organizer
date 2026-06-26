@@ -111,11 +111,43 @@ Bug reports and feature requests are read and taken seriously. If something does
 
 For security issues, please use [private vulnerability reporting](https://github.com/itielbru/gphotos-takeout-organizer/security/advisories/new) instead of a public issue.
 
+## Output structures
+
+```
+YearMonth (default)            Albums                   Flat
+─────────────────────────      ─────────────────────    ────────────────────
+output/                        output/                  output/
+└── ALL_PHOTOS/                ├── Summer Trip/         └── ALL_PHOTOS/
+    ├── 2023/                  │   └── IMG_001.jpg          ├── IMG_001.jpg
+    │   ├── 2023-07/           └── Family/                  └── IMG_002.jpg
+    │   │   └── IMG_001.jpg        └── IMG_002.jpg
+    │   └── 2023-08/
+    │       └── IMG_002.jpg
+    └── Undated/
+        └── IMG_nodate.jpg
+```
+
+Special folders (Archive, Trash, Locked Folder) are always segregated into their own top-level subdirectory, regardless of output structure.
+
+## Album strategy comparison
+
+| Strategy | Disk space | Requires | Photo app support |
+|----------|-----------|----------|-------------------|
+| Shortcut (symlink → hardlink → copy) | None (unless copy) | Developer Mode for symlinks | Varies |
+| Duplicate | 2× | — | Always works |
+| JSON Manifest | None | Custom parser | Manual |
+| Nothing | None | — | No album grouping |
+
+`Shortcut` is the default: it tries a symlink first, falls back to a hardlink on the same drive, then copies. The fallback chain is fully automatic.
+
 ## Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — engine design, concurrency model, the #353 matching trick, date/timezone hierarchy.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — build, test, and contribution workflow.
 - [SECURITY.md](SECURITY.md) — security policy (no telemetry; processes files locally).
+- [docs/troubleshooting.md](docs/troubleshooting.md) — wrong dates, missing files, ExifTool issues, Live Photos, exit codes.
+- [docs/cli-cookbook.md](docs/cli-cookbook.md) — CLI recipes: dry-run, automation scripts, report parsing, exit code handling.
+- [docs/performance.md](docs/performance.md) — tuning `--cpu`, `--exif-parallel`, and advice for large datasets and NAS targets.
 - [README.he.md](README.he.md) — Hebrew documentation.
 - [DEVELOPMENT.md](DEVELOPMENT.md) — development journal (Hebrew).
 

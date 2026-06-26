@@ -9,6 +9,50 @@ using Xunit;
 
 namespace GPhotosTakeout.Tests;
 
+public class TimezoneResolverCacheTests
+{
+    private static readonly TakeoutGeo TelAviv = new() { Latitude = 32.0853, Longitude = 34.7818 };
+    private static readonly TakeoutGeo TelAvivClose = new() { Latitude = 32.0901, Longitude = 34.7850 }; // ~500m away
+    private static readonly TakeoutGeo London = new() { Latitude = 51.5074, Longitude = -0.1278 };
+
+    [Fact]
+    public void SameGps_ReturnsSameZoneObject()
+    {
+        var resolver = new TimezoneResolver(null);
+        var zone1 = resolver.ResolveZone(TelAviv);
+        var zone2 = resolver.ResolveZone(TelAviv);
+        Assert.Same(zone1, zone2); // cached: identical reference
+    }
+
+    [Fact]
+    public void NearbyGps_RoundsToSameKey_ReturnsSameZone()
+    {
+        var resolver = new TimezoneResolver(null);
+        // Both coords round to ~same 1-km cell, so the same cache slot is hit.
+        var zone1 = resolver.ResolveZone(TelAviv);
+        var zone2 = resolver.ResolveZone(TelAvivClose);
+        Assert.Equal(zone1?.Id, zone2?.Id);
+    }
+
+    [Fact]
+    public void DifferentGps_ReturnsDifferentZones()
+    {
+        var resolver = new TimezoneResolver(null);
+        var zoneTelAviv = resolver.ResolveZone(TelAviv);
+        var zoneLondon = resolver.ResolveZone(London);
+        Assert.NotEqual(zoneTelAviv?.Id, zoneLondon?.Id);
+    }
+
+    [Fact]
+    public void NullGeo_ReturnsFallback()
+    {
+        var resolver = new TimezoneResolver("Asia/Jerusalem");
+        var zone = resolver.ResolveZone(geo: null);
+        Assert.NotNull(zone);
+        Assert.Equal(TimeSpan.FromHours(2), zone!.GetUtcOffset(new DateTime(2023, 1, 15, 12, 0, 0, DateTimeKind.Utc)));
+    }
+}
+
 public class TimezoneResolverTests
 {
     // Tel Aviv.

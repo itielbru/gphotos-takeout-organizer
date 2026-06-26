@@ -68,9 +68,9 @@ public sealed class ProcessingPipeline
         // gracefully — organize and date files without embedded metadata — instead of crashing.
         await using var exifPool = StartExifPoolOrNull(options, errors, counters);
 
-        var parallelism = options.OutputStructure == OutputStructure.YearMonth
-            ? options.CpuParallelism
-            : 1; // album/flat dest dirs are shared; keep simple ordering
+        // MoveUnique handles concurrent name races atomically, so all output structures
+        // are safe to run with full parallelism.
+        var parallelism = options.CpuParallelism;
 
         try
         {

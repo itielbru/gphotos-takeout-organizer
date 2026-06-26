@@ -4,15 +4,32 @@
 
 </div>
 
-# מארגן Google Photos Takeout (WinUI3)
-
-אפליקציית Windows שלוקחת קובצי **Google Photos Takeout** (ZIP), מאחדת את ה-metadata
-מקובצי ה-JSON חזרה לתוך התמונות (EXIF/XMP), מתקנת תאריכים ואזורי זמן, מטפלת
-בכפילויות ובאלבומים, ומפיקה ספרייה נקייה ומאורגנת. הממשק בעברית (RTL) ובאנגלית.
-
 <div align="center">
-<img src="docs/assets/wizard-he.png" alt="אשף מארגן Google Photos Takeout" width="760">
+
+# מארגן Google Photos Takeout
+
+**ממזג את מטא-הדאטה של Google Photos Takeout חזרה לתוך התמונות — תאריכים נכונים, אזורי זמן, כפילויות ואלבומים — ומפיק ספרייה נקייה ומאורגנת.**
+
+[![CI](https://github.com/itielbru/gphotos-takeout-organizer/actions/workflows/ci.yml/badge.svg)](https://github.com/itielbru/gphotos-takeout-organizer/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?include_prereleases&sort=semver)](https://github.com/itielbru/gphotos-takeout-organizer/releases)
+[![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+
+<img src="docs/assets/hero.png" alt="מארגן Google Photos Takeout — אשף" width="760">
+
 </div>
+
+## מה הכלי עושה
+
+Google Photos Takeout מייצא את הספרייה שלך כקבצי ZIP שבהם המטא-דאטה האמיתי שמור בקובצי `.json` **ליד** כל תמונה — לא בתוכה. רוב הכלים מתעלמים מקבצים אלה, וכתוצאה מכך מתקבלים תאריכים שגויים ותיאורים שאבדו. הכלי הזה פותר זאת:
+
+- **איחוד מחדש של מטא-דאטה** — כותב את התאריך המקורי, ה-GPS והתיאור מה-JSON של Takeout **פנימה** לתוך ה-EXIF/XMP של כל קובץ (באמצעות ExifTool), כך שכל אפליקציית תמונות תקרא אותם נכון.
+- **תאריכים נכונים עם אזור זמן** — `photoTakenTime` הוא UTC; הזמן המקומי ו-`OffsetTimeOriginal` נגזרים מה-GPS, ווידאו מקבל `QuickTime:CreateDate` נכון.
+- **התאמה חסינה לשגיאות** — מטפל בשמות `*.supplemental-metadata.json` קטועים של גוגל ([Issue #353](https://github.com/TheLastGimbus/GooglePhotosTakeoutHelper/issues/353)), גרסאות `-edited`/`(N)` ו-Live/Motion Photo — לפי קידומת, לא לפי מספרים קסומים.
+- **ביטול כפילויות אטומי** — ביטול כפילויות מבוסס hash-תוכן שהוא race-free תחת מקביליות מלאה.
+- **ארגון אלבומים** — יוצר מחדש אלבומים באמצעות symlink → hardlink → copy כ-fallback.
+- **בטוח לנתיבים ארוכים**, תומך במספר ארכיונים, ניתן לחידוש, עם תצוגה מקדימה של dry-run.
+- **ממשק דו-לשוני** — עברית (RTL) ואנגלית (LTR), ניתן להחלפה בזמן אמת.
 
 ## התקנה מהירה
 
@@ -22,6 +39,11 @@
 
 **Windows 10 / 11 · קובץ EXE יחיד · ללא התקנה · ללא ZIP**
 
+| | אפליקציה גרפית (אשף) | שורת פקודה |
+|:--|:--|:--|
+| **x64** (Intel/AMD) | [App ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [CLI ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
+| **ARM64** (Snapdragon) | [App ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [CLI ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
+
 </div>
 
 1. הורד מ-[הגרסה האחרונה](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — בחר את קובץ ה-**App** מסוג `.exe` המתאים למעבד שלך (x64 / ARM64). זהו קובץ יחיד עצמאי — בלי ZIP ובלי התקנה.
@@ -29,7 +51,81 @@
 3. הוסף את קובצי ה-Takeout → בחר אפשרויות → הרץ.
 
 > **הערת SmartScreen:** הקובץ אינו חתום דיגיטלית, ולכן בהרצה הראשונה Windows עשוי להציג
-> אזהרה. לחץ **More info → Run anyway** כדי להמשיך.
+> אזהרה. לחץ **More info → Run anyway** כדי להמשיך. זה נורמלי לאפליקציות קוד פתוח ללא חתימה.
+
+### שורת פקודה (headless)
+
+```powershell
+# תצוגה מקדימה — מתכנן ומדווח בלי לכתוב כלום
+gptakeout -i takeout-001.zip -o C:\Photos --dry-run --report plan.json
+
+# ריצה אמיתית עם דוח CSV
+gptakeout -i takeout-001.zip -i takeout-002.zip -o C:\Photos --report report.csv
+
+# עזרה מלאה
+gptakeout --help
+```
+
+דגלים עיקריים: `--structure yearmonth|albums|flat`, `--albums`, `--duplicates`,
+`--timezone <IANA>`, `--no-metadata`, `--exiftool <path>`, `--dry-run`, `--report <.json|.csv>`,
+`--log <path>`, `--no-log`, `-v`.
+
+קודי יציאה: `0` הצלחה · `1` הושלם עם שגיאות · `2` קלט לא תקין · `3` שגיאה קטלנית · `64` בוטל.
+
+## ExifTool
+
+האפליקציה מתקינה בנייה מוצמדת של [ExifTool](https://exiftool.org) בהרצה הראשונה בלחיצה אחת
+(לתוך `%LocalAppData%\GPhotosTakeout\Tools`). ה-CLI משתמש באותה התקנה אוטומטית, או שאפשר להעביר `--exiftool <path>`. ללא ExifTool, האפליקציה עדיין מארגנת ומתארכת קבצים, אבל לא תכתוב metadata לתוכם.
+
+## מבנה הפלט
+
+```
+YearMonth (ברירת מחדל)         Albums                   Flat
+──────────────────────────     ─────────────────────    ────────────────────
+output/                        output/                  output/
+└── ALL_PHOTOS/                ├── קיץ 2023/            └── ALL_PHOTOS/
+    ├── 2023/                  │   └── IMG_001.jpg          ├── IMG_001.jpg
+    │   ├── 2023-07/           └── משפחה/                   └── IMG_002.jpg
+    │   │   └── IMG_001.jpg        └── IMG_002.jpg
+    │   └── 2023-08/
+    │       └── IMG_002.jpg
+    └── Undated/
+        └── IMG_ללא_תאריך.jpg
+```
+
+תיקיות מיוחדות (Archive, Trash, Locked Folder) תמיד מופרדות לתת-ספרייה משלהן בראש הפלט, ללא תלות במבנה הנבחר.
+
+## השוואת אסטרטגיות אלבום
+
+| אסטרטגיה | שימוש בדיסק | דרישות | תמיכה באפליקציות תמונות |
+|----------|------------|---------|-------------------------|
+| Shortcut (symlink → hardlink → copy) | ללא (אלא אם copy) | Developer Mode עבור symlinks | משתנה |
+| Duplicate | כפול | — | תמיד עובד |
+| JSON Manifest | ללא | מנתח ייחודי | ידני |
+| Nothing | ללא | — | ללא ארגון אלבומים |
+
+`Shortcut` הוא ברירת המחדל: מנסה symlink קודם, נופל ל-hardlink באותו כונן, ואז מעתיק. שרשרת ה-fallback אוטומטית לחלוטין.
+
+## בנייה מהמקור
+
+```powershell
+# בדיקות (Core)
+dotnet test tests/GPhotosTakeout.Tests/GPhotosTakeout.Tests.csproj
+
+# אפליקציה (חובה לציין פלטפורמה — x64 או ARM64)
+dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -p:Platform=x64
+```
+
+נדרש **.NET 9 SDK**. ראה [CONTRIBUTING.md](CONTRIBUTING.md) להגדרת סביבת הפיתוח המלאה
+(כולל התקנת ExifTool מקומית) ו-[ARCHITECTURE.md](ARCHITECTURE.md) לתכנון המנוע, מודל המקביליות ואסטרטגיית ה-matching/date/timezone.
+
+## צילומי מסך
+
+| אנגלית (LTR) | עברית (RTL) |
+|:---:|:---:|
+| ![אשף אנגלית](docs/assets/wizard-en.png) | ![אשף עברית](docs/assets/wizard-he.png) |
+
+הממשק דו-לשוני לחלוטין וניתן להחלפה בזמן אמת — כל הפריסה מתהפכת לעברית.
 
 ## מבנה הפרויקט
 
@@ -45,68 +141,27 @@ GPhotosTakeout.sln
 │   ├─ IO/         תמיכת נתיבים ארוכים (\\?\)
 │   └─ Pipeline/   אורקסטרציה, מקביליות, resume, progress
 ├─ src/GPhotosTakeout.App/    אפליקציית WinUI3 (Unpackaged, עברית/אנגלית)
-├─ src/GPhotosTakeout.Cli/    הרצה headless (gptakeout) — אוטומציה, batch, בדיקות E2E
-└─ tests/GPhotosTakeout.Tests/  87 בדיקות (matching, dates, dedup, pipeline, מקביליות,
-                                ולידציה, dry-run, ExifTool resilience, long-path, archives, timezone, albums)
+├─ src/GPhotosTakeout.Cli/    הרצה headless (gptakeout) — אוטומציה, batch
+└─ tests/GPhotosTakeout.Tests/  בדיקות (matching, dates, dedup, pipeline, מקביליות,
+                                 ולידציה, dry-run, ExifTool resilience, long-path, archives, timezone, albums)
 ```
 
-פרטי הארכיטקטורה המלאים: [ARCHITECTURE.md](ARCHITECTURE.md).
+## תיעוד
 
-## דרישות
-
-- **.NET 9 SDK** (לבנייה מהמקור).
-- **ExifTool** — מותקן בלחיצה אחת מתוך האפליקציה בהרצה הראשונה (אל `%LocalAppData%\GPhotosTakeout\Tools`). לבנייה מהמקור, הורד את `exiftool.exe` מ-https://exiftool.org
-  והנח אותו בתיקיית `Tools/` שליד קובץ ההרצה. ללא ExifTool, האפליקציה עדיין מארגנת
-  ומתארכת קבצים, אך לא כותבת metadata לתוך הקבצים.
-
-## בנייה והרצה
-
-```powershell
-# בדיקות (Core)
-dotnet test tests/GPhotosTakeout.Tests/GPhotosTakeout.Tests.csproj
-
-# בניית האפליקציה (חובה לציין פלטפורמה — x64 או ARM64)
-dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -p:Platform=x64
-
-# הרצה
-./src/GPhotosTakeout.App/bin/x64/Debug/net9.0-windows10.0.19041.0/GPhotosTakeout.App.exe
-```
-
-## הרצה משורת פקודה (CLI)
-
-```powershell
-# תצוגה מקדימה (Dry-run) — מתכנן ומדווח בלי לכתוב כלום
-dotnet run --project src/GPhotosTakeout.Cli -- -i takeout-001.zip -o C:\Out --dry-run --report plan.json
-
-# ריצה אמיתית עם דוח CSV
-dotnet run --project src/GPhotosTakeout.Cli -- -i takeout-001.zip -i takeout-002.zip -o C:\Out --report report.csv
-
-# עזרה מלאה
-dotnet run --project src/GPhotosTakeout.Cli -- --help
-```
-
-דגלים עיקריים: `--structure yearmonth|albums|flat`, `--albums`, `--duplicates`,
-`--timezone <IANA>`, `--no-metadata`, `--exiftool <path>`, `--dry-run`, `--report <.json|.csv>`,
-`--log <path>`, `--no-log`, `-v`. קודי יציאה: 0 הצלחה · 1 הושלם עם שגיאות · 2 קלט לא תקין · 3 בוטל.
-
-## החלטות עיצוב מרכזיות
-
-- **Unpackaged / Self-Contained** — כדי לאפשר הרצת `exiftool.exe` וגישה
-  מלאה למערכת הקבצים (MSIX sandbox חוסם את שניהם). בניית MSIX נשארת אפשרית (opt-in).
-- **ExifTool ב-batch mode מתמשך** — תהליך יחיד עם `-stay_open`, pool קטן
-  (I/O-bound) במקום הרצה לכל קובץ.
-- **התאמה לפי prefix, לא לפי אורך-קיטוע קבוע** — עמיד לכל וריאציה של גוגל
-  (`.supplemental-metadata.json` ועד `.s.json`).
-- **timezone מ-GPS** — `photoTakenTime` הוא UTC; מחושב זמן מקומי + `OffsetTimeOriginal`
-  לתמונות, ו-`QuickTime:CreateDate` (UTC) לווידאו.
-- **נתיבים ארוכים (>260)** — prefix `\\?\` + `longPathAware` ב-manifest.
+- [ARCHITECTURE.md](ARCHITECTURE.md) — תכנון המנוע, מודל המקביליות, טריק ה-#353, היררכיית תאריך/timezone.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — בנייה, בדיקות, ותהליך התרומה.
+- [SECURITY.md](SECURITY.md) — מדיניות אבטחה (ללא טלמטריה; מעבד קבצים מקומית).
+- [docs/troubleshooting.md](docs/troubleshooting.md) — תאריכים שגויים, קבצים חסרים, בעיות ExifTool, Live Photos, קודי יציאה.
+- [docs/cli-cookbook.md](docs/cli-cookbook.md) — מתכונים ל-CLI: dry-run, סקריפטים אוטומטיים, ניתוח דוחות, טיפול בקודי יציאה.
+- [docs/performance.md](docs/performance.md) — כוונון `--cpu`, `--exif-parallel`, ועצות לדאטאסטים גדולים ויעדי NAS.
+- [DEVELOPMENT.md](DEVELOPMENT.md) — יומן פיתוח (עברית).
 
 ## בעיות ותמיכה
 
 דיווחי באגים ובקשות לתכונות נקראים ומטופלים ברצינות. אם משהו לא עובד — תאריכים שגויים, קבצים חסרים, קריסה — פתחו [issue](https://github.com/itielbru/gphotos-takeout-organizer/issues) עם פרטים: גרסת Windows, איזה Takeout גרם לבעיה, ושורות רלוונטיות מקובץ הלוג (`%LocalAppData%\GPhotosTakeout\logs\`). כל דיווח מקבל מענה.
 
-לבעיות אבטחה — השתמשו ב[דיווח פרטי](https://github.com/itielbru/gphotos-takeout-organizer/security/advisories/new) במקום issue ציבורי.
+לבעיות אבטחה — השתמשו ב-[דיווח פרטי](https://github.com/itielbru/gphotos-takeout-organizer/security/advisories/new) במקום issue ציבורי.
 
 ## רישיון
 
-[MIT](LICENSE).
+[MIT](LICENSE) © 2026 Itiel Bru.

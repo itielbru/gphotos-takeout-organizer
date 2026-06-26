@@ -49,4 +49,87 @@ public class OutputPathBuilderTests
         Assert.Equal(SpecialFolder.Trash, OutputPathBuilder.Classify("x/Trash"));
         Assert.Equal(SpecialFolder.None, OutputPathBuilder.Classify("x/Photos from 2023"));
     }
+
+    // ── Flat structure ───────────────────────────────────────────────────────
+
+    [Fact]
+    public void Flat_PlacesAllFilesUnderAllPhotos()
+    {
+        var builder = new OutputPathBuilder(OutputStructure.Flat);
+        var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/Photos from 2023/IMG.jpg"),
+            new DateTime(2023, 8, 15));
+        Assert.Equal(@"C:\out\ALL_PHOTOS\IMG.jpg", p);
+    }
+
+    [Fact]
+    public void Flat_AlbumFolderAlsoLandsInAllPhotos()
+    {
+        var builder = new OutputPathBuilder(OutputStructure.Flat);
+        var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/SummerTrip/IMG.jpg"), null);
+        Assert.Equal(@"C:\out\ALL_PHOTOS\IMG.jpg", p);
+    }
+
+    [Fact]
+    public void Flat_IgnoresDate_SamePathWithOrWithoutDate()
+    {
+        var builder = new OutputPathBuilder(OutputStructure.Flat);
+        var withDate = builder.BuildPath(@"C:\out", Media("x/IMG.jpg"), new DateTime(2023, 1, 1));
+        var noDate   = builder.BuildPath(@"C:\out", Media("x/IMG.jpg"), null);
+        Assert.Equal(withDate, noDate);
+    }
+
+    // ── Albums structure ─────────────────────────────────────────────────────
+
+    [Fact]
+    public void Albums_PlacesFileInAlbumNamedFolder()
+    {
+        var builder = new OutputPathBuilder(OutputStructure.Albums);
+        var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/My Trip/IMG.jpg"), null);
+        Assert.Equal(@"C:\out\My Trip\IMG.jpg", p);
+    }
+
+    [Fact]
+    public void Albums_MainLibraryFolderUsedAsAlbumName()
+    {
+        var builder = new OutputPathBuilder(OutputStructure.Albums);
+        var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/Photos from 2023/IMG.jpg"),
+            new DateTime(2023, 8, 15));
+        // "Photos from 2023" is just a folder name in Albums mode.
+        Assert.Equal(@"C:\out\Photos from 2023\IMG.jpg", p);
+    }
+
+    // ── Special folder edge cases ────────────────────────────────────────────
+
+    [Fact]
+    public void SpecialFolder_Bin_ClassifiedAsTrash()
+    {
+        Assert.Equal(SpecialFolder.Trash, OutputPathBuilder.Classify("Takeout/Google Photos/Bin"));
+    }
+
+    [Fact]
+    public void SpecialFolder_LockedFolder_Detected()
+    {
+        Assert.Equal(SpecialFolder.LockedFolder, OutputPathBuilder.Classify("Takeout/Google Photos/Locked Folder"));
+    }
+
+    [Fact]
+    public void SpecialFolder_LockedFolder_PlacedInOwnSubdir()
+    {
+        var builder = new OutputPathBuilder(OutputStructure.YearMonth);
+        var p = builder.BuildPath(@"C:\out",
+            Media("Takeout/Google Photos/Locked Folder/secret.jpg"),
+            new DateTime(2023, 1, 1));
+        // Special folders bypass the ALL_PHOTOS tree entirely.
+        Assert.StartsWith(@"C:\out\LockedFolder\", p, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SpecialFolder_Trash_PlacedInOwnSubdir()
+    {
+        var builder = new OutputPathBuilder(OutputStructure.YearMonth);
+        var p = builder.BuildPath(@"C:\out",
+            Media("Takeout/Google Photos/Trash/deleted.jpg"),
+            new DateTime(2023, 1, 1));
+        Assert.StartsWith(@"C:\out\Trash\", p, StringComparison.Ordinal);
+    }
 }
