@@ -68,7 +68,7 @@ public class ResumeJournalTests : IDisposable
     }
 
     [Fact]
-    public void ThreadSafety_ConcurrentMarkDone_NoDataLoss()
+    public async Task ThreadSafety_ConcurrentMarkDone_NoDataLoss()
     {
         const int threads = 20;
         const int keysPerThread = 50;
@@ -80,7 +80,7 @@ public class ResumeJournalTests : IDisposable
                 j.MarkDone($"thread{t}-key{i}");
         })).ToArray();
 
-        Task.WaitAll(tasks);
+        await Task.WhenAll(tasks);
 
         // Every unique key must be recorded exactly once.
         Assert.Equal(threads * keysPerThread, j.CompletedCount);
@@ -90,7 +90,7 @@ public class ResumeJournalTests : IDisposable
     }
 
     [Fact]
-    public void ThreadSafety_WrittenKeysPersistedAfterReopen()
+    public async Task ThreadSafety_WrittenKeysPersistedAfterReopen()
     {
         const int threads = 10;
         const int keysPerThread = 20;
@@ -102,7 +102,7 @@ public class ResumeJournalTests : IDisposable
                 for (var i = 0; i < keysPerThread; i++)
                     j.MarkDone($"t{t}-k{i}");
             })).ToArray();
-            Task.WaitAll(tasks);
+            await Task.WhenAll(tasks);
         }
 
         using var j2 = ResumeJournal.Open(_dir);

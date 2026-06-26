@@ -33,8 +33,17 @@ public sealed class TakeoutJson
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
     };
 
-    public static TakeoutJson? Parse(string json) =>
-        JsonSerializer.Deserialize<TakeoutJson>(json, Options);
+    public static TakeoutJson? Parse(string json)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<TakeoutJson>(json, Options);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 }
 
 public sealed class TakeoutTimestamp
