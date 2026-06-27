@@ -68,6 +68,15 @@ jobs:
           $min = [int]($env:MIN_LINE ?? 0)
           if ($linePct -lt $min) { Write-Error "Line coverage $linePct% is below the $min% gate."; exit 1 }
 
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          directory: ./coverage
+          files: '**/coverage.cobertura.xml'
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7

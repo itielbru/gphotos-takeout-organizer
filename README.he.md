@@ -11,6 +11,7 @@
 **ממזג את מטא-הדאטה של Google Photos Takeout חזרה לתוך התמונות — תאריכים נכונים, אזורי זמן, כפילויות ואלבומים — ומפיק ספרייה נקייה ומאורגנת.**
 
 [![CI](https://github.com/itielbru/gphotos-takeout-organizer/actions/workflows/ci.yml/badge.svg)](https://github.com/itielbru/gphotos-takeout-organizer/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/itielbru/gphotos-takeout-organizer/branch/main/graph/badge.svg)](https://codecov.io/gh/itielbru/gphotos-takeout-organizer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?include_prereleases&sort=semver)](https://github.com/itielbru/gphotos-takeout-organizer/releases)
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
