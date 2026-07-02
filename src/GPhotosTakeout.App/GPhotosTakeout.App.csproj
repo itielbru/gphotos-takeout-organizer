@@ -33,13 +33,15 @@
     <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
   </PropertyGroup>
 
-  <!-- Single-file EXE publish (opt-in via -p:PublishSingleFile=true). Produces ONE
-       self-contained .exe so users download a single file instead of a zip — deps
-       self-extract to a temp dir on first launch. WinUI 3 requires the unpackaged +
-       self-contained model with EnableMsixTooling + IncludeAllContentForSelfExtract;
-       see https://learn.microsoft.com/windows/apps/package-and-deploy/unpackage-winui-app#single-file-exe
-       (Because BaseDirectory is then a temp dir, ExifTool installs to LocalAppData —
-       see ExifToolInstaller.) Guarded so a plain `dotnet build` stays unaffected. -->
+  <!-- Single-file EXE publish (opt-in via -p:PublishSingleFile=true). NOT currently used
+       by the release pipeline: combining PublishSingleFile with WindowsAppSDKSelfContained
+       on an unpackaged WinUI 3 app crashes on startup for every user (STATUS_STOWED_EXCEPTION
+       in Microsoft.UI.Xaml.dll — resources.pri isn't reliably found by the self-extracted
+       temp copy). This is a known, still-open upstream issue, not something fixable here;
+       see microsoft/WindowsAppSDK#2597, #2978, #4603. The release build publishes a normal
+       self-contained folder (zipped) instead. Left here, guarded, in case a future
+       WindowsAppSDK release fixes it — do not wire this into release.yml without verifying
+       the resulting exe actually launches on a real Windows machine first. -->
   <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
     <SelfContained>true</SelfContained>
     <EnableMsixTooling>true</EnableMsixTooling>
