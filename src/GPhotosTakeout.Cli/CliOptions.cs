@@ -10,7 +10,7 @@ internal sealed class CliOptions
     public OutputStructure Structure { get; private set; } = OutputStructure.YearMonth;
     public AlbumStrategy Albums { get; private set; } = AlbumStrategy.Shortcut;
     public DuplicateHandling Duplicates { get; private set; } = DuplicateHandling.KeepBest;
-    public string? Timezone { get; private set; } = "Asia/Jerusalem";
+    public string? Timezone { get; private set; } = ProcessingOptions.DefaultFallbackTimeZone;
     public bool WriteMetadata { get; private set; } = true;
     public string? ExifToolPath { get; private set; }
     public int? Cpu { get; private set; }

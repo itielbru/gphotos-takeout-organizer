@@ -80,10 +80,22 @@ jobs:
           path: dist
           merge-multiple: true
 
+      # Software Bill of Materials: scans the source tree for all dependencies
+      # (NuGet packages + transitive) so consumers can audit what shipped.
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: dist/sbom.spdx.json
+          artifact-name: sbom.spdx.json
+
       - name: Create draft release
         uses: softprops/action-gh-release@v3
         with:
           draft: true
           generate_release_notes: true
           body_path: CHANGELOG.md
-          files: dist/*.exe
+          files: |
+            dist/*.exe
+            dist/sbom.spdx.json

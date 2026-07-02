@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using GeoTimeZone;
 using GPhotosTakeout.Core.Models;
 
@@ -12,6 +13,10 @@ namespace GPhotosTakeout.Core.Dates;
 /// </summary>
 public sealed class TimezoneResolver
 {
+    // Rounded to 2 decimal places (~1 km grid). Most Takeout archives have many
+    // photos from the same location; caching avoids redundant GeoTimeZone lookups.
+    private static readonly ConcurrentDictionary<(int lat100, int lon100), TimeZoneInfo?> _geoCache = new();
+
     private readonly TimeZoneInfo? _fallback;
 
     public TimezoneResolver(string? fallbackIanaId = null)
@@ -37,8 +42,12 @@ public sealed class TimezoneResolver
     {
         if (geo is { IsPresent: true })
         {
-            var ianaId = TimeZoneLookup.GetTimeZone(geo.Latitude, geo.Longitude).Result;
-            var tz = TryFindTimeZone(ianaId);
+            var key = ((int)Math.Round(geo.Latitude * 100), (int)Math.Round(geo.Longitude * 100));
+            var tz = _geoCache.GetOrAdd(key, static k =>
+            {
+                var ianaId = TimeZoneLookup.GetTimeZone(k.lat100 / 100.0, k.lon100 / 100.0).Result;
+                return TryFindTimeZone(ianaId);
+            });
             if (tz is not null)
                 return tz;
         }

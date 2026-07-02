@@ -38,7 +38,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _outputStructureIndex = s.OutputStructureIndex;
         _albumStrategyIndex = s.AlbumStrategyIndex;
         _duplicateHandlingIndex = s.DuplicateHandlingIndex;
-        _fallbackTimeZone = s.FallbackTimeZone ?? "Asia/Jerusalem";
+        _fallbackTimeZone = s.FallbackTimeZone ?? ProcessingOptions.DefaultFallbackTimeZone;
         _dryRun = s.DryRun;
 
         var lang = Localization.FromCode(s.Language);
@@ -47,6 +47,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _flowDirection = Localization.FlowFor(lang);
 
         ZipFiles.CollectionChanged += OnZipFilesChanged;
+        _ = CheckExifToolUpdateAsync();
+    }
+
+    private async Task CheckExifToolUpdateAsync()
+    {
+        try
+        {
+            ExifToolUpdateAvailable = await ExifToolInstaller.IsUpdateAvailableAsync().ConfigureAwait(false);
+        }
+        catch { /* non-critical: if check fails, no upgrade button shown */ }
     }
 
     private void OnZipFilesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -96,7 +106,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _duplicateHandlingIndex; // 0 keep best, 1 keep all
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasTimezoneError))]
-    private string? _fallbackTimeZone = "Asia/Jerusalem";
+    private string? _fallbackTimeZone = ProcessingOptions.DefaultFallbackTimeZone;
     [ObservableProperty] private bool _dryRun;
 
     // Live timezone validation for Step 2 (empty is allowed — it's optional).
@@ -128,17 +138,23 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public Visibility HasLiveErrors => Visible(ErrorCount > 0);
     public string LiveErrorText => $"{ErrorCount} {S.LblErrors}";
 
-    // ExifTool one-click install (Step 2).
+    // ExifTool one-click install / upgrade (Step 2).
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNotInstallingExifTool))]
     [NotifyCanExecuteChangedFor(nameof(InstallExifToolCommand))]
+    [NotifyCanExecuteChangedFor(nameof(UpgradeExifToolCommand))]
     private bool _isInstallingExifTool;
     [ObservableProperty] private double _exifInstallProgress;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasInstallError))]
     private string? _exifInstallError;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanUpgradeExifTool))]
+    [NotifyCanExecuteChangedFor(nameof(UpgradeExifToolCommand))]
+    private bool _exifToolUpdateAvailable;
     public bool IsNotInstallingExifTool => !IsInstallingExifTool;
     public Visibility HasInstallError => Visible(!string.IsNullOrEmpty(ExifInstallError));
+    public bool CanUpgradeExifTool => ExifToolUpdateAvailable && !IsInstallingExifTool;
 
     // Summary.
     [ObservableProperty] private ProcessingReport? _report;
@@ -238,6 +254,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             var progress = new Progress<double>(p => _dispatcher.TryEnqueue(() => ExifInstallProgress = p));
             var path = await ExifToolInstaller.InstallAsync(progress);
             ExifToolPath = path;
+            ExifToolUpdateAvailable = false;
             OnPropertyChanged(nameof(MetadataAvailable));
             OnPropertyChanged(nameof(MetadataMissing));
         }
@@ -250,6 +267,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
             IsInstallingExifTool = false;
         }
     }
+
+    [RelayCommand(CanExecute = nameof(CanUpgradeExifTool))]
+    private Task UpgradeExifToolAsync() => InstallExifToolAsync();
 
     public void SetOutput(string path)
     {

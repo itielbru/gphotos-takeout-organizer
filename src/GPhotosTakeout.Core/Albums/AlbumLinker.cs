@@ -31,7 +31,12 @@ public sealed class AlbumLinker
             try
             {
                 File.CreateSymbolicLink(LongPath.Extended(linkPath), LongPath.Extended(targetPath));
-                return new LinkOutcome(LinkMethod.Symlink, true, null);
+                // Verify the link is actually accessible: on some filesystems the API
+                // succeeds but the resulting entry is not reachable (e.g. cross-volume
+                // junctions on certain SMB mounts). Fall through to hardlink if so.
+                if (File.Exists(LongPath.Extended(linkPath)))
+                    return new LinkOutcome(LinkMethod.Symlink, true, null);
+                _symlinkBlocked = true;
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {
