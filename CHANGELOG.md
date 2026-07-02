@@ -7,14 +7,17 @@ All notable changes to this project are documented here. The format is based on
 ## [Unreleased]
 
 ### Changed
-- Release builds now target win-x64 only (ARM64 dropped from the release pipeline), so
-  the GitHub Release attaches exactly two `.exe` files — one App, one CLI.
+- Release pipeline can now also be run manually (`workflow_dispatch`) for testing without
+  pushing a tag.
+- README/README.he clarify which downloaded `.exe` is the App and which is the CLI, and show
+  how to run the downloaded CLI binary directly (not just via `dotnet run`).
 
-## [1.1.0] - 2026-06-25
+## [1.1.0] - 2026-07-02
 
 ### Changed
-- Releases now ship a single self-contained `.exe` per target (App and CLI, x64 + ARM64)
-  instead of zips — download one file and run it, no extraction.
+- Releases now ship a single self-contained `.exe` per target (App and CLI) instead of
+  zips — download one file and run it, no extraction. Builds target win-x64 only, so the
+  GitHub Release attaches exactly two `.exe` files — one App, one CLI.
 - ExifTool is no longer bundled in the download. The App installs it on first run with one
   click into `%LocalAppData%\GPhotosTakeout\Tools`; the CLI reuses that install or accepts
   `--exiftool <path>`. This keeps the install stable across the single-file app's temp
