@@ -42,30 +42,43 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 **Windows 10 / 11 · single .exe · no installer · no zip**
 
-| Desktop app (wizard) | Command line |
-|:--|:--|
-| [App ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [CLI ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
+| | Desktop app (GUI wizard) | Command line (CLI) |
+|:--|:--|:--|
+| Download | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
+| File to grab | `GPhotosTakeout-App-<version>-win-x64.exe` | `gptakeout-<version>-win-x64.exe` |
 
 </div>
 
-1. Download the **App** `.exe` from the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — Windows x64. It's a single self-contained file — no zip, no install.
-2. Run `GPhotosTakeout-App-…-x64.exe`. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download). Everything else works without it.
-3. Add your Takeout ZIPs → pick options → run.
+Both files are attached to the same [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) page — pick the one you need. Each is a single self-contained file — no zip, no install.
 
-> **SmartScreen note:** the executable is not code-signed, so on first run Windows
+- **App** (double-click, graphical wizard): run `GPhotosTakeout-App-…-win-x64.exe`. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download). Everything else works without it. Then: add your Takeout ZIPs → pick options → run.
+- **CLI** (scripting / automation): run `gptakeout-…-win-x64.exe` from a terminal — see [Command line](#command-line-headless) below.
+
+> **SmartScreen note:** the executables are not code-signed, so on first run Windows
 > SmartScreen may warn you. Click **More info → Run anyway** to continue. This is expected
 > for unsigned open-source apps.
 
 ### Command line (headless)
 
+Download `gptakeout-<version>-win-x64.exe` from the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) and run it directly:
+
 ```powershell
 # Dry-run preview — plans and reports without writing anything
-dotnet run --project src/GPhotosTakeout.Cli -- -i takeout-001.zip -o C:\Out --dry-run --report plan.json
+.\gptakeout-<version>-win-x64.exe -i takeout-001.zip -o C:\Out --dry-run --report plan.json
 
 # Real run with a CSV report
-dotnet run --project src/GPhotosTakeout.Cli -- -i takeout-001.zip -i takeout-002.zip -o C:\Out --report report.csv
+.\gptakeout-<version>-win-x64.exe -i takeout-001.zip -i takeout-002.zip -o C:\Out --report report.csv
 
 # Full help
+.\gptakeout-<version>-win-x64.exe --help
+```
+
+Tip: rename it to `gptakeout.exe` (or put it on your `PATH`) to match the shorter `gptakeout …`
+commands used throughout [docs/cli-cookbook.md](docs/cli-cookbook.md).
+
+Building from source instead of downloading the release binary:
+
+```powershell
 dotnet run --project src/GPhotosTakeout.Cli -- --help
 ```
 
