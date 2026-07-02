@@ -7,10 +7,21 @@ name: Release
 # ExifTool is not bundled — the App installs it on first run with one click (into
 # %LocalAppData%\GPhotosTakeout\Tools), and the CLI reuses that install or takes
 # an explicit --exiftool path.
+#
+# Can also be run manually (Actions tab → Run workflow) for testing the
+# pipeline without pushing a tag — pick the branch/commit to build and supply
+# a version number; the release step creates the vX.Y.Z tag if it doesn't
+# already exist.
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to embed in filenames and tag (e.g. 1.1.0)'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -27,7 +38,11 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          $v = "${{ github.ref_name }}" -replace '^v',''
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $v = "${{ inputs.version }}" -replace '^v',''
+          } else {
+            $v = "${{ github.ref_name }}" -replace '^v',''
+          }
           "version=$v" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Publish App single-file
@@ -67,6 +82,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Resolve tag
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=v${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
@@ -86,6 +111,8 @@ jobs:
       - name: Create draft release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          target_commitish: ${{ github.sha }}
           draft: true
           generate_release_notes: true
           body_path: CHANGELOG.md
