@@ -6,10 +6,19 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+- **The App download from v1.1.0 does not launch — do not use it.** The single-file EXE
+  build crashed on startup for every user (`STATUS_STOWED_EXCEPTION` in
+  `Microsoft.UI.Xaml.dll`), caused by a known, still-open upstream WinUI 3 issue combining
+  `PublishSingleFile` with an unpackaged, self-contained app
+  (see [microsoft/WindowsAppSDK#2597](https://github.com/microsoft/WindowsAppSDK/issues/2597)).
+  The App now ships as a self-contained folder (zipped) instead. The CLI was never affected
+  (no XAML/WindowsAppSDK dependency) and remains a single `.exe`.
+
 ### Changed
 - Release pipeline can now also be run manually (`workflow_dispatch`) for testing without
   pushing a tag.
-- README/README.he clarify which downloaded `.exe` is the App and which is the CLI, and show
+- README/README.he clarify which downloaded file is the App and which is the CLI, and show
   how to run the downloaded CLI binary directly (not just via `dotnet run`).
 
 ## [1.1.0] - 2026-07-02
@@ -18,6 +27,7 @@ All notable changes to this project are documented here. The format is based on
 - Releases now ship a single self-contained `.exe` per target (App and CLI) instead of
   zips — download one file and run it, no extraction. Builds target win-x64 only, so the
   GitHub Release attaches exactly two `.exe` files — one App, one CLI.
+  **The App exe in this release does not launch — see the Fixed entry above.**
 - ExifTool is no longer bundled in the download. The App installs it on first run with one
   click into `%LocalAppData%\GPhotosTakeout\Tools`; the CLI reuses that install or accepts
   `--exiftool <path>`. This keeps the install stable across the single-file app's temp

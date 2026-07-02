@@ -1,9 +1,15 @@
 name: Release
 
-# Tag-driven portable release. Push a tag like v1.0.0 to build single-file,
-# self-contained EXEs for the App and the CLI (win-x64) and attach them to a
-# draft GitHub Release. No zips: each artifact is one downloadable .exe, and
-# the release has exactly two EXEs — one App, one CLI.
+# Tag-driven portable release. Push a tag like v1.0.0 to build for win-x64 and
+# attach two artifacts to a draft GitHub Release:
+#   - the CLI as a single self-contained .exe (no XAML/WindowsAppSDK dependency,
+#     so .NET's PublishSingleFile works cleanly for it)
+#   - the App as a self-contained folder, zipped. WinUI 3's unpackaged
+#     PublishSingleFile mode is NOT used here: combining it with
+#     WindowsAppSDKSelfContained crashes on startup for every user with
+#     STATUS_STOWED_EXCEPTION in Microsoft.UI.Xaml.dll (resources.pri isn't
+#     reliably available to the self-extracted temp copy) — a known upstream
+#     issue, see microsoft/WindowsAppSDK#2597, #2978, #4603.
 # ExifTool is not bundled — the App installs it on first run with one click (into
 # %LocalAppData%\GPhotosTakeout\Tools), and the CLI reuses that install or takes
 # an explicit --exiftool path.
@@ -45,11 +51,11 @@ jobs:
           }
           "version=$v" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-      - name: Publish App single-file
+      - name: Publish App (self-contained folder, win-x64)
         run: >
           dotnet publish src/GPhotosTakeout.App/GPhotosTakeout.App.csproj
           -c Release -p:Platform=x64 -r win-x64
-          --self-contained -p:WindowsPackageType=None -p:PublishSingleFile=true
+          --self-contained -p:WindowsPackageType=None
           -o publish/app
 
       - name: Publish CLI single-file
@@ -60,19 +66,21 @@ jobs:
           -p:DebugType=embedded
           -o publish/cli
 
-      - name: Stage release EXEs
+      - name: Stage release artifacts
         shell: pwsh
         run: |
           $v = "${{ steps.ver.outputs.version }}"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item "publish/app/GPhotosTakeout.App.exe" "dist/GPhotosTakeout-App-$v-win-x64.exe" -Force
-          Copy-Item "publish/cli/gptakeout.exe"          "dist/gptakeout-$v-win-x64.exe" -Force
+          Compress-Archive -Path publish/app/* -DestinationPath "dist/GPhotosTakeout-App-$v-win-x64.zip" -Force
+          Copy-Item "publish/cli/gptakeout.exe" "dist/gptakeout-$v-win-x64.exe" -Force
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: dist
-          path: dist/*.exe
+          path: |
+            dist/*.zip
+            dist/*.exe
 
   release:
     needs: build
@@ -117,5 +125,6 @@ jobs:
           generate_release_notes: true
           body_path: CHANGELOG.md
           files: |
+            dist/*.zip
             dist/*.exe
             dist/sbom.spdx.json
