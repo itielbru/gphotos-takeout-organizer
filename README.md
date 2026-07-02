@@ -42,14 +42,13 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 **Windows 10 / 11 · single .exe · no installer · no zip**
 
-| | Desktop app (wizard) | Command line |
-|:--|:--|:--|
-| **x64** (Intel/AMD) | [App ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [CLI ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
-| **ARM64** (Snapdragon) | [App ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [CLI ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
+| Desktop app (wizard) | Command line |
+|:--|:--|
+| [App ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [CLI ⬇](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
 
 </div>
 
-1. Download from the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — pick the **App** `.exe` for your CPU (x64 / ARM64). It's a single self-contained file — no zip, no install.
+1. Download the **App** `.exe` from the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) — Windows x64. It's a single self-contained file — no zip, no install.
 2. Run `GPhotosTakeout-App-…-x64.exe`. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download). Everything else works without it.
 3. Add your Takeout ZIPs → pick options → run.
 

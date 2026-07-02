@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+- Release builds now target win-x64 only (ARM64 dropped from the release pipeline), so
+  the GitHub Release attaches exactly two `.exe` files — one App, one CLI.
+
 ## [1.1.0] - 2026-06-25
 
 ### Changed
