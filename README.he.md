@@ -112,7 +112,7 @@ output/                        output/                  output/
 |----------|------------|---------|-------------------------|
 | Shortcut (symlink → hardlink → copy) | ללא (אלא אם copy) | Developer Mode עבור symlinks | משתנה |
 | Duplicate | כפול | — | תמיד עובד |
-| JSON Manifest | ללא | מנתח ייחודי | ידני |
+| JSON Manifest (`albums.json` בשורש הפלט) | ללא | מנתח ייחודי | ידני |
 | Nothing | ללא | — | ללא ארגון אלבומים |
 
 `Shortcut` הוא ברירת המחדל: מנסה symlink קודם, נופל ל-hardlink באותו כונן, ואז מעתיק. שרשרת ה-fallback אוטומטית לחלוטין.

@@ -10,7 +10,20 @@ All notable changes to this project are documented here. The format is based on
 - Bilingual project roadmap ([ROADMAP.md](ROADMAP.md) / [ROADMAP.he.md](ROADMAP.he.md))
   describing the phased path to v1.2/v1.3, with priorities and acceptance criteria.
 
+### Added
+- The `duplicate` album strategy now works: identical album copies are placed as
+  physical files under `Albums/<name>/` instead of silently behaving like `nothing`.
+- The `json` album strategy now works end-to-end: `--albums json` parses (it previously
+  exited with a usage error) and the run writes an `albums.json` manifest at the output
+  root mapping each album to its files (paths relative to the output root, forward
+  slashes). Resumed runs merge into the existing manifest instead of overwriting it.
+- Album membership is now also materialized under the `flat` output structure and with
+  `--duplicates keepall` (previously only `yearmonth` + `keepbest`).
+
 ### Fixed
+- Album entries are now created regardless of which copy wins the de-duplication race.
+  Previously the `Albums/` link was created only when the album copy lost the race, so
+  archives where the album copy appeared first produced no album entry at all.
 - The documented last-resort date fallback (file modified time) now actually runs: the
   ZIP entry's last-write timestamp is captured during indexing and used to date files
   that have no sidecar, no filename date, and no folder year (`DateSource=FileModified`).

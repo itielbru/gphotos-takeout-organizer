@@ -53,7 +53,7 @@ internal sealed class CliOptions
                 case "-i" or "--input": o.Inputs.Add(Next(args, ref i, a)); break;
                 case "-o" or "--output": o.Output = Next(args, ref i, a); break;
                 case "--structure": o.Structure = ParseEnum<OutputStructure>(Next(args, ref i, a), a); break;
-                case "--albums": o.Albums = ParseEnum<AlbumStrategy>(Next(args, ref i, a), a); break;
+                case "--albums": o.Albums = ParseAlbumStrategy(Next(args, ref i, a), a); break;
                 case "--duplicates": o.Duplicates = ParseEnum<DuplicateHandling>(Next(args, ref i, a), a); break;
                 case "--timezone": o.Timezone = Next(args, ref i, a); break;
                 case "--no-metadata": o.WriteMetadata = false; break;
@@ -87,8 +87,19 @@ internal sealed class CliOptions
             ? n
             : throw new ArgumentException($"Option {flag} expects an integer, got '{value}'.");
 
+    // The usage text advertises "json" (friendlier than the enum name JsonManifest).
+    private static AlbumStrategy ParseAlbumStrategy(string value, string flag) =>
+        value.Equals("json", StringComparison.OrdinalIgnoreCase)
+            ? AlbumStrategy.JsonManifest
+            : Enum.TryParse<AlbumStrategy>(value, ignoreCase: true, out var v) && !char.IsAsciiDigit(value[0])
+                ? v
+                : throw new ArgumentException(
+                    $"Option {flag} expects one of [shortcut, duplicate, json, nothing], got '{value}'.");
+
     private static T ParseEnum<T>(string value, string flag) where T : struct, Enum =>
-        Enum.TryParse<T>(value, ignoreCase: true, out var v)
+        // Enum.TryParse also accepts bare integers ("1"); reject those — only names
+        // are documented values.
+        Enum.TryParse<T>(value, ignoreCase: true, out var v) && !(value.Length > 0 && char.IsAsciiDigit(value[0]))
             ? v
             : throw new ArgumentException(
                 $"Option {flag} expects one of [{string.Join(", ", Enum.GetNames<T>())}], got '{value}'.");

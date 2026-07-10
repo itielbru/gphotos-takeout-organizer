@@ -18,7 +18,7 @@ public enum AlbumStrategy
     Shortcut,
     /// <summary>Physically duplicate files into each album folder.</summary>
     Duplicate,
-    /// <summary>One folder + albums-info.json describing membership.</summary>
+    /// <summary>One folder + an albums.json manifest at the output root describing membership.</summary>
     JsonManifest,
     /// <summary>Ignore album structure entirely.</summary>
     Nothing,

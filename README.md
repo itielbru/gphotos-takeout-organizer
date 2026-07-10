@@ -153,7 +153,7 @@ Special folders (Archive, Trash, Locked Folder) are always segregated into their
 |----------|-----------|----------|-------------------|
 | Shortcut (symlink → hardlink → copy) | None (unless copy) | Developer Mode for symlinks | Varies |
 | Duplicate | 2× | — | Always works |
-| JSON Manifest | None | Custom parser | Manual |
+| JSON Manifest (`albums.json` at the output root) | None | Custom parser | Manual |
 | Nothing | None | — | No album grouping |
 
 `Shortcut` is the default: it tries a symlink first, falls back to a hardlink on the same drive, then copies. The fallback chain is fully automatic.

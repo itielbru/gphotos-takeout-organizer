@@ -56,6 +56,7 @@ public sealed class ProcessingPipeline
         var dateResolver = new DateResolver();
         var dedup = new HashDeduplicator();
         var linker = new AlbumLinker();
+        var albumManifest = new AlbumManifestCollector();
         var pathBuilder = new OutputPathBuilder(options.OutputStructure);
 
         var counters = new Counters();
@@ -89,7 +90,7 @@ public sealed class ProcessingPipeline
                         else Interlocked.Increment(ref counters.Unmatched);
 
                         var outcome = await ProcessOneAsync(match, options, reader, dateResolver, tz, pathBuilder,
-                            dedup, linker, exifPool, counters, options.DryRun, token).ConfigureAwait(false);
+                            dedup, linker, albumManifest, exifPool, counters, options.DryRun, token).ConfigureAwait(false);
                         outcomes.Add(outcome);
 
                         if (!options.DryRun) journal.MarkDone(key);
@@ -132,6 +133,23 @@ public sealed class ProcessingPipeline
             // Expected when the user cancels: fall through and return a partial
             // report (already-done work is persisted in the journal for resume).
             _logger.LogInformation("Run cancelled after {Processed}/{Total} files", processed, media.Count);
+        }
+
+        // Persist album membership for the JsonManifest strategy. Written even after a
+        // cancel so a partial run leaves a usable manifest; WriteAsync merges with any
+        // manifest from a previous (resumed) run so already-journaled files aren't lost.
+        if (!options.DryRun && options.AlbumStrategy == AlbumStrategy.JsonManifest && albumManifest.HasEntries)
+        {
+            try
+            {
+                await albumManifest.WriteAsync(options.OutputDirectory, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+            {
+                Interlocked.Increment(ref counters.Errors);
+                errors.Add($"Could not write {AlbumManifestCollector.FileName}: {ex.Message}");
+                _logger.LogWarning(ex, "Could not write album manifest");
+            }
         }
 
         // Surface any ExifTool stderr that accumulated during the run; otherwise
@@ -190,8 +208,8 @@ public sealed class ProcessingPipeline
     private static async Task<FileOutcome> ProcessOneAsync(
         MatchResult match, ProcessingOptions options, TakeoutArchiveReader reader,
         DateResolver dateResolver, TimezoneResolver tz, OutputPathBuilder pathBuilder,
-        HashDeduplicator dedup, AlbumLinker linker, ExifToolPool? exifPool,
-        Counters counters, bool dryRun, CancellationToken ct)
+        HashDeduplicator dedup, AlbumLinker linker, AlbumManifestCollector albumManifest,
+        ExifToolPool? exifPool, Counters counters, bool dryRun, CancellationToken ct)
     {
         var media = match.Media;
 
@@ -246,11 +264,13 @@ public sealed class ProcessingPipeline
         if (dryRun)
             return outcome with { Planned = true };
 
-        // Album shortcut handling: an album copy that duplicates the main-library
-        // copy becomes a link to the canonical file instead of a second extraction.
+        // Album handling: under YearMonth/Flat structures album folders collapse into
+        // ALL_PHOTOS, so membership must be materialized separately (link, copy, or
+        // manifest entry, per AlbumStrategy). The Albums structure keeps album folders
+        // as real output folders, so nothing extra is needed there.
         var isAlbumCopy = !isSpecial
                           && !OutputPathBuilder.IsMainLibraryFolder(media.Folder)
-                          && options.OutputStructure == OutputStructure.YearMonth;
+                          && options.OutputStructure != OutputStructure.Albums;
 
         // Extract to a per-entry temp file first so dedup can decide before we ever
         // touch the canonical destination (two copies can map to the same dest path).
@@ -280,18 +300,16 @@ public sealed class ProcessingPipeline
                         // instead of discarding it (avoids losing the only remaining one).
                         var (salvageDest, salvageWrote) = await PlaceAndTagAsync(
                             tempPath, dest, json, localDate, utcDate, offset, exifPool, counters, ct).ConfigureAwait(false);
+                        if (isAlbumCopy)
+                            MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, salvageDest);
                         return outcome with { DestinationPath = salvageDest, MetadataWritten = salvageWrote };
                     }
 
                     Interlocked.Increment(ref counters.Duplicates);
                     TryDelete(tempPath);
 
-                    if (isAlbumCopy && options.AlbumStrategy == AlbumStrategy.Shortcut)
-                    {
-                        var albumName = LastSegment(media.Folder);
-                        var linkPath = Path.Combine(options.OutputDirectory, "Albums", albumName, media.FileName);
-                        linker.Link(canonical, linkPath);
-                    }
+                    if (isAlbumCopy)
+                        MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, canonical);
                     return outcome with { IsDuplicate = true, DestinationPath = canonical };
                 }
 
@@ -305,6 +323,11 @@ public sealed class ProcessingPipeline
                     published = true;
                     var wrote = await TagAsync(finalDest, json, localDate, utcDate, offset, exifPool, counters, ct)
                         .ConfigureAwait(false);
+                    // An album copy that wins the dedup race still lands in ALL_PHOTOS
+                    // (the path builder ignores the album folder), so its album entry
+                    // must be materialized here too — not only on the duplicate path.
+                    if (isAlbumCopy)
+                        MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, finalDest);
                     return outcome with { DestinationPath = finalDest, MetadataWritten = wrote };
                 }
                 finally
@@ -316,6 +339,8 @@ public sealed class ProcessingPipeline
             // KeepAll: no de-duplication, just place and tag every copy.
             var (placedDest, placedWrote) = await PlaceAndTagAsync(
                 tempPath, dest, json, localDate, utcDate, offset, exifPool, counters, ct).ConfigureAwait(false);
+            if (isAlbumCopy)
+                MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, placedDest);
             return outcome with { DestinationPath = placedDest, MetadataWritten = placedWrote };
         }
         finally
@@ -323,6 +348,33 @@ public sealed class ProcessingPipeline
             // Never leave an orphaned .part behind (the happy paths move/delete it,
             // but an exception mid-flight would otherwise litter the output tree).
             if (LongPath.Exists(tempPath)) TryDelete(tempPath);
+        }
+    }
+
+    /// <summary>
+    /// Materializes one album membership according to the chosen strategy: a link
+    /// (Shortcut), a physical copy (Duplicate), a manifest entry (JsonManifest), or
+    /// nothing. <paramref name="canonicalPath"/> is where the file's content lives.
+    /// </summary>
+    private static void MaterializeAlbumEntry(
+        ProcessingOptions options, AlbumLinker linker, AlbumManifestCollector albumManifest,
+        string folder, string fileName, string canonicalPath)
+    {
+        var albumName = LastSegment(folder);
+        switch (options.AlbumStrategy)
+        {
+            case AlbumStrategy.Shortcut:
+                linker.Link(canonicalPath, Path.Combine(options.OutputDirectory, "Albums", albumName, fileName));
+                break;
+            case AlbumStrategy.Duplicate:
+                linker.Copy(canonicalPath, Path.Combine(options.OutputDirectory, "Albums", albumName, fileName));
+                break;
+            case AlbumStrategy.JsonManifest:
+                albumManifest.Record(albumName, fileName, canonicalPath);
+                break;
+            case AlbumStrategy.Nothing:
+            default:
+                break;
         }
     }
 

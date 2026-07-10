@@ -71,6 +71,27 @@ public sealed class AlbumLinker
         }
     }
 
+    /// <summary>
+    /// Places a physical copy of <paramref name="targetPath"/> at <paramref name="linkPath"/>
+    /// (the Duplicate album strategy — no link fallback chain).
+    /// </summary>
+    public LinkOutcome Copy(string targetPath, string linkPath)
+    {
+        var dir = Path.GetDirectoryName(linkPath);
+        if (!string.IsNullOrEmpty(dir))
+            LongPath.EnsureDirectory(dir);
+
+        try
+        {
+            File.Copy(LongPath.Extended(targetPath), LongPath.Extended(linkPath), overwrite: true);
+            return new LinkOutcome(LinkMethod.Copy, true, null);
+        }
+        catch (Exception ex)
+        {
+            return new LinkOutcome(LinkMethod.Copy, false, ex.Message);
+        }
+    }
+
     private static bool SameVolume(string a, string b)
     {
         var ra = Path.GetPathRoot(Path.GetFullPath(a));
