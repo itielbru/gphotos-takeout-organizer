@@ -159,6 +159,7 @@ GPhotosTakeout.sln
 
 ## תיעוד
 
+- [ROADMAP.he.md](ROADMAP.he.md) — התוכנית המדורגת למוצר מלוטש ומוגמר, עם עדיפויות וקריטריוני קבלה.
 - [ARCHITECTURE.md](ARCHITECTURE.md) — תכנון המנוע, מודל המקביליות, טריק ה-#353, היררכיית תאריך/timezone.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — בנייה, בדיקות, ותהליך התרומה.
 - [SECURITY.md](SECURITY.md) — מדיניות אבטחה (ללא טלמטריה; מעבד קבצים מקומית).

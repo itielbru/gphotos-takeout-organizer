@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- Bilingual project roadmap ([ROADMAP.md](ROADMAP.md) / [ROADMAP.he.md](ROADMAP.he.md))
+  describing the phased path to v1.2/v1.3, with priorities and acceptance criteria.
+
 ### Fixed
 - **The App download from v1.1.0 does not launch — do not use it.** The single-file EXE
   build crashed on startup for every user (`STATUS_STOWED_EXCEPTION` in
