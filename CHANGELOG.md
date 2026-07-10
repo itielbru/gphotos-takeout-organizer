@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-10
+
 ### Added
 - Bilingual project roadmap ([ROADMAP.md](ROADMAP.md) / [ROADMAP.he.md](ROADMAP.he.md))
   describing the phased path to v1.2/v1.3, with priorities and acceptance criteria.
@@ -87,6 +89,7 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.0
 [1.1.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.1.0
 [1.0.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.0.0

@@ -14,7 +14,7 @@ status; items link to the code they touch.
 
 Closing the gap between what the docs promise and what the pipeline actually runs.
 
-- [ ] **1.1 Wire the file-modified-time date fallback** (P0)
+- [x] **1.1 Wire the file-modified-time date fallback** (P0)
   `DateResolver` supports a last-resort file-modified-time tier, but the pipeline always
   passes `fileModifiedUtc: null`, so the tier never fires. Capture
   `ZipArchiveEntry.LastWriteTime` during indexing and pass it through.
@@ -22,34 +22,34 @@ Closing the gap between what the docs promise and what the pipeline actually run
   from its ZIP entry timestamp (`DateSource=FileModified`) and lands in the right
   year/month folder; covered by an integration test.
 
-- [ ] **1.2 Fix `--albums json` CLI parsing** (P0)
+- [x] **1.2 Fix `--albums json` CLI parsing** (P0)
   The help text advertises `--albums json`, but the enum member is `JsonManifest`, so the
   documented value exits with a usage error. Accept `json` as an alias.
   *Accept:* `gptakeout --albums json` parses; unit test covers the alias.
 
-- [ ] **1.3 Fix the album-shortcut ordering race** (P0)
+- [x] **1.3 Fix the album-shortcut ordering race** (P0)
   An album link is created only when the album copy *loses* the dedup race. If the album
   copy is extracted first (becomes the hash owner), no `Albums/` entry is ever created.
   Materialize the album entry on every path: duplicate branch, owner branch, and KeepAll.
   *Accept:* with the album entry ordered first in the archive, the `Albums/<name>/<file>`
   entry still exists after the run; test asserts it unconditionally.
 
-- [ ] **1.4 Implement the `Duplicate` album strategy** (P1)
+- [x] **1.4 Implement the `Duplicate` album strategy** (P1)
   `--albums duplicate` currently behaves like `nothing` — the album copy is deduped away
   and nothing is materialized. It should place a physical copy under `Albums/<name>/`.
   *Accept:* test asserts a real file (not a link) exists in the album folder.
 
-- [ ] **1.5 Implement the `JsonManifest` album strategy** (P1)
+- [x] **1.5 Implement the `JsonManifest` album strategy** (P1)
   Emit an `albums.json` manifest at the output root (schema v1: album name → files with
   paths relative to the output root, forward slashes).
   *Accept:* manifest exists after a run, schema validated in a test.
 
-- [ ] **1.6 Document `Nothing` semantics** (P2)
+- [x] **1.6 Document `Nothing` semantics** (P2)
   Under KeepBest it is a proper no-op; under KeepAll album copies still land as physical
   extra copies in `ALL_PHOTOS`. Document, don't change.
   *Accept:* README/cookbook explain the KeepAll caveat.
 
-- [ ] **1.7 EXIF-read date fallback** (P1)
+- [x] **1.7 EXIF-read date fallback** (P1)
   The `DateSource.Exif` tier is implemented and tested but unreachable — the pipeline
   passes `exifDateLocal: null`. Read `DateTimeOriginal` (images) / `CreationDate` (video)
   with the managed MetadataExtractor library after extraction and re-resolve when the
@@ -60,31 +60,31 @@ Closing the gap between what the docs promise and what the pipeline actually run
 
 ## Phase 2 — Tests & quality hardening (target: v1.2.x)
 
-- [ ] **2.1 Unit tests for the CLI parser** (P1)
+- [x] **2.1 Unit tests for the CLI parser** (P1)
   `CliOptions.Parse` and `ToProcessingOptions` are untested and duplicated against the
   help text. Add `InternalsVisibleTo` + a test-project reference to the CLI project.
   *Accept:* ~20 cases covering defaults, every flag, enum aliases, and error paths.
 
-- [ ] **2.2 Default fallback timezone from the system** (P1)
+- [x] **2.2 Default fallback timezone from the system** (P1)
   `Asia/Jerusalem` is hardcoded as the app-wide default. Derive the default from the
   system timezone (converted to IANA), keeping `Asia/Jerusalem` only in examples.
   *Accept:* unit test that the resolved default is a valid IANA id.
 
-- [ ] **2.3 `TryDelete` logs failures** (P2)
+- [x] **2.3 `TryDelete` logs failures** (P2)
   Temp-file cleanup failures are currently swallowed silently.
   *Accept:* a warning with the path is logged on failure.
 
-- [ ] **2.4 Remove the dead `ExportReport` command stub** (P2)
+- [x] **2.4 Remove the dead `ExportReport` command stub** (P2)
   The RelayCommand is never bound (the window uses `Click="OnExportReport"`); delete the
   stub and its dead `NotifyCanExecuteChanged` call.
 
-- [ ] **2.5 Single-source the version number** (P2)
+- [x] **2.5 Single-source the version number** (P2)
   `Directory.Build.props` says 1.1.0 while `Package.appxmanifest` says 1.0.0.0 — already
   drifted. Sync the manifest and add a CI step to the MSIX workflow that rewrites the
   manifest version from `Directory.Build.props`.
 
 - [ ] **2.6 Raise the coverage gate 60 → 65 → 70** (P2)
-  With 2.1 landed the gate moves to 65 (current coverage ≈67%; the CLI's untested
+  The 65 milestone shipped with 2.1 (current coverage ≈67%; the CLI's untested
   `Program.cs` entry point drags the average down). 70 becomes reachable once 3.1
   extracts testable logic from the App.
 
