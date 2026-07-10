@@ -11,6 +11,11 @@ All notable changes to this project are documented here. The format is based on
   describing the phased path to v1.2/v1.3, with priorities and acceptance criteria.
 
 ### Fixed
+- The documented last-resort date fallback (file modified time) now actually runs: the
+  ZIP entry's last-write timestamp is captured during indexing and used to date files
+  that have no sidecar, no filename date, and no folder year (`DateSource=FileModified`).
+  Previously such files landed in `Undated` even when the archive carried a usable
+  timestamp.
 - **The App download from v1.1.0 does not launch — do not use it.** The single-file EXE
   build crashed on startup for every user (`STATUS_STOWED_EXCEPTION` in
   `Microsoft.UI.Xaml.dll`), caused by a known, still-open upstream WinUI 3 issue combining

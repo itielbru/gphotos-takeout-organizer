@@ -202,7 +202,9 @@ public sealed class ProcessingPipeline
             json = TakeoutJson.Parse(System.Text.Encoding.UTF8.GetString(bytes));
         }
 
-        var resolved = dateResolver.Resolve(media.FileName, json, exifDateLocal: null, media.Folder, fileModifiedUtc: null);
+        var resolved = dateResolver.Resolve(
+            media.FileName, json, exifDateLocal: null, media.Folder,
+            fileModifiedUtc: media.LastWriteTime?.UtcDateTime);
 
         // Compute local capture time + offset for metadata and for the year/month folder.
         DateTime? localDate = null, utcDate = null;

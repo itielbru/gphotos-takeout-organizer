@@ -91,6 +91,40 @@ public class PipelineIntegrationTests : IDisposable
         Assert.True(File.Exists(Path.Combine(output, ResumeJournal.FileName)));
     }
 
+    [Fact]
+    public async Task Run_NoOtherDateSource_FallsBackToZipEntryModifiedTime()
+    {
+        var zipPath = Path.Combine(_dir, "takeout-001.zip");
+        using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            // No sidecar, no date in the name, no year in the folder -> only the
+            // ZIP entry's last-write time can date this file.
+            var entry = zip.CreateEntry("Takeout/Google Photos/Random Stuff/holiday.jpg");
+            entry.LastWriteTime = new DateTimeOffset(2019, 3, 10, 12, 0, 0, TimeSpan.Zero);
+            using var s = entry.Open();
+            s.Write(new byte[] { 1, 2, 3 });
+        }
+
+        var output = Path.Combine(_dir, "out3");
+        var options = new ProcessingOptions
+        {
+            InputZipPaths = new[] { zipPath },
+            OutputDirectory = output,
+            WriteMetadata = false,
+            CpuParallelism = 1,
+        };
+
+        var report = await new ProcessingPipeline(null).RunAsync(options);
+
+        Assert.Equal(0, report.Errors);
+        var outcome = Assert.Single(report.Outcomes);
+        Assert.Equal("FileModified", outcome.DateSource);
+
+        var placed = Directory.EnumerateFiles(Path.Combine(output, "ALL_PHOTOS", "2019"), "holiday.jpg",
+            SearchOption.AllDirectories).FirstOrDefault();
+        Assert.True(placed is not null, "file should be dated from the ZIP entry timestamp");
+    }
+
     private static void AddBinary(ZipArchive zip, string path, byte[] content)
     {
         var entry = zip.CreateEntry(path);
