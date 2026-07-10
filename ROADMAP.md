@@ -83,8 +83,10 @@ Closing the gap between what the docs promise and what the pipeline actually run
   drifted. Sync the manifest and add a CI step to the MSIX workflow that rewrites the
   manifest version from `Directory.Build.props`.
 
-- [ ] **2.6 Raise the coverage gate 60 → 70** (P2)
-  Once 2.1 lands, the gate in `ci.yml` can be tightened without churn.
+- [ ] **2.6 Raise the coverage gate 60 → 65 → 70** (P2)
+  With 2.1 landed the gate moves to 65 (current coverage ≈67%; the CLI's untested
+  `Program.cs` entry point drags the average down). 70 becomes reachable once 3.1
+  extracts testable logic from the App.
 
 ## Phase 3 — App polish (target: v1.3.0)
 

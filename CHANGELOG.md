@@ -44,6 +44,9 @@ All notable changes to this project are documented here. The format is based on
   (no XAML/WindowsAppSDK dependency) and remains a single `.exe`.
 
 ### Changed
+- The CLI argument parser is now covered by unit tests (~30 cases: defaults, every
+  flag, enum aliases, and error paths), and the CI line-coverage gate was raised from
+  60% to 65%.
 - Release pipeline can now also be run manually (`workflow_dispatch`) for testing without
   pushing a tag.
 - README/README.he clarify which downloaded file is the App and which is the CLI, and show
