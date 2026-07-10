@@ -173,6 +173,7 @@ OPTIONS:
       --duplicates <s>     keepbest | keepall                (default: keepbest)
       --timezone <iana>    Fallback timezone for photos without GPS (default: Asia/Jerusalem).
       --no-metadata        Do not write EXIF/XMP (skip ExifTool).
+      --no-exif-fallback   Do not read dates embedded in files when the sidecar has none.
       --exiftool <path>    Path to exiftool(.exe). Auto-detected from ./Tools otherwise.
       --cpu <n>            CPU-bound parallelism.
       --exif-parallel <n>  Concurrent ExifTool processes.

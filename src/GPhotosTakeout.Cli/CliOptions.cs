@@ -12,6 +12,7 @@ internal sealed class CliOptions
     public DuplicateHandling Duplicates { get; private set; } = DuplicateHandling.KeepBest;
     public string? Timezone { get; private set; } = ProcessingOptions.DefaultFallbackTimeZone;
     public bool WriteMetadata { get; private set; } = true;
+    public bool UseExifFallback { get; private set; } = true;
     public string? ExifToolPath { get; private set; }
     public int? Cpu { get; private set; }
     public int? ExifParallel { get; private set; }
@@ -33,6 +34,7 @@ internal sealed class CliOptions
             DuplicateHandling = Duplicates,
             FallbackTimeZone = string.IsNullOrWhiteSpace(Timezone) ? null : Timezone,
             WriteMetadata = WriteMetadata,
+            UseExifFallback = UseExifFallback,
             DryRun = DryRun,
         };
         if (Cpu is { } cpu) opt = opt with { CpuParallelism = cpu };
@@ -57,6 +59,7 @@ internal sealed class CliOptions
                 case "--duplicates": o.Duplicates = ParseEnum<DuplicateHandling>(Next(args, ref i, a), a); break;
                 case "--timezone": o.Timezone = Next(args, ref i, a); break;
                 case "--no-metadata": o.WriteMetadata = false; break;
+                case "--no-exif-fallback": o.UseExifFallback = false; break;
                 case "--exiftool": o.ExifToolPath = Next(args, ref i, a); break;
                 case "--cpu": o.Cpu = ParseInt(Next(args, ref i, a), a); break;
                 case "--exif-parallel": o.ExifParallel = ParseInt(Next(args, ref i, a), a); break;

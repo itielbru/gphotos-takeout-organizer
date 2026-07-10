@@ -11,6 +11,12 @@ All notable changes to this project are documented here. The format is based on
   describing the phased path to v1.2/v1.3, with priorities and acceptance criteria.
 
 ### Added
+- New EXIF date-fallback tier: when the sidecar has no usable date, the capture date
+  embedded in the file itself (EXIF `DateTimeOriginal` for photos, the QuickTime
+  creation time for videos) is read after extraction — via the managed
+  MetadataExtractor library, so it works without ExifTool — and outranks the weaker
+  filename/folder/modified-time tiers. Opt out with `--no-exif-fallback`. Note:
+  dry-run never extracts, so it may report a weaker `DateSource` than the real run.
 - The `duplicate` album strategy now works: identical album copies are placed as
   physical files under `Albums/<name>/` instead of silently behaving like `nothing`.
 - The `json` album strategy now works end-to-end: `--albums json` parses (it previously

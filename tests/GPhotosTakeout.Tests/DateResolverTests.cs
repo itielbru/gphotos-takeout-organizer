@@ -57,4 +57,34 @@ public class DateResolverTests
         Assert.Equal(DateSource.AlbumFolder, r.Source);
         Assert.Equal(2019, r.Value.Year);
     }
+
+    [Fact]
+    public void Resolve_ExifOutranksFilenameAndFolder()
+    {
+        var exif = new ExifDate(new DateTime(2021, 5, 4, 10, 20, 30), IsUtc: false);
+        var r = _resolver.Resolve("IMG_20230815_142536.jpg", null, exif,
+            "Takeout/Google Photos/Photos from 2019", null);
+        Assert.Equal(DateSource.Exif, r.Source);
+        Assert.Equal(new DateTime(2021, 5, 4, 10, 20, 30), r.Value);
+        Assert.False(r.IsUtc);
+    }
+
+    [Fact]
+    public void Resolve_ExifUtcFlagPropagates()
+    {
+        // A QuickTime creation time is a UTC instant, unlike EXIF wall-clock tags.
+        var exif = new ExifDate(new DateTime(2021, 5, 4, 10, 20, 30), IsUtc: true);
+        var r = _resolver.Resolve("clip.mp4", null, exif, null, null);
+        Assert.Equal(DateSource.Exif, r.Source);
+        Assert.True(r.IsUtc);
+    }
+
+    [Fact]
+    public void Resolve_JsonOutranksExif()
+    {
+        var json = TakeoutJson.Parse("""{"photoTakenTime":{"timestamp":"1692108336"}}""");
+        var exif = new ExifDate(new DateTime(2021, 5, 4), IsUtc: false);
+        var r = _resolver.Resolve("vacation.jpg", json, exif, null, null);
+        Assert.Equal(DateSource.Json, r.Source);
+    }
 }

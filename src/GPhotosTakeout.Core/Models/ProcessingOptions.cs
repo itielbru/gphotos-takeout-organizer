@@ -51,6 +51,13 @@ public sealed record ProcessingOptions
     /// <summary>Write EXIF/metadata into media (requires bundled ExifTool).</summary>
     public bool WriteMetadata { get; init; } = true;
 
+    /// <summary>
+    /// When the sidecar has no usable date, read the capture date embedded in the file
+    /// itself (EXIF / QuickTime) after extraction and prefer it over the weaker
+    /// filename/folder/modified-time tiers. Managed reader — works without ExifTool.
+    /// </summary>
+    public bool UseExifFallback { get; init; } = true;
+
     /// <summary>Parallelism for CPU-bound stages (indexing, hashing, matching).</summary>
     public int CpuParallelism { get; init; } = Math.Max(2, Environment.ProcessorCount - 2);
 

@@ -221,30 +221,10 @@ public sealed class ProcessingPipeline
         }
 
         var resolved = dateResolver.Resolve(
-            media.FileName, json, exifDateLocal: null, media.Folder,
+            media.FileName, json, exif: null, media.Folder,
             fileModifiedUtc: media.LastWriteTime?.UtcDateTime);
 
-        // Compute local capture time + offset for metadata and for the year/month folder.
-        DateTime? localDate = null, utcDate = null;
-        string? offset = null;
-        if (resolved.HasValue)
-        {
-            if (resolved.IsUtc)
-            {
-                var instant = new DateTimeOffset(resolved.Value, TimeSpan.Zero);
-                var local = tz.ResolveLocal(instant, json?.BestGeo);
-                localDate = local.DateTime;
-                utcDate = instant.UtcDateTime;
-                offset = local.Offset == TimeSpan.Zero && json?.BestGeo is not { IsPresent: true }
-                    ? null
-                    : FormatOffset(local.Offset);
-            }
-            else
-            {
-                localDate = resolved.Value; // already local wall-clock
-                utcDate = resolved.Value;
-            }
-        }
+        var (localDate, utcDate, offset) = ComputeTimes(resolved, json, tz);
 
         var isSpecial = OutputPathBuilder.Classify(media.Folder) != SpecialFolder.None;
         if (isSpecial) Interlocked.Increment(ref counters.SpecialItems);
@@ -280,6 +260,23 @@ public sealed class ProcessingPipeline
         try
         {
             var extract = await reader.ExtractAsync(media, tempPath, ct).ConfigureAwait(false);
+
+            // Second-chance date resolve: a capture date embedded in the file (EXIF /
+            // QuickTime) outranks the filename/folder/modified-time tiers but is only
+            // readable once the bytes exist on disk. Dry-run never gets here, so its
+            // report can show a weaker DateSource than the real run will use.
+            if (options.UseExifFallback && resolved.Source != DateSource.Json
+                && ExifDateReader.TryRead(tempPath) is { } exifDate)
+            {
+                resolved = dateResolver.Resolve(
+                    media.FileName, json, exifDate, media.Folder,
+                    fileModifiedUtc: media.LastWriteTime?.UtcDateTime);
+                (localDate, utcDate, offset) = ComputeTimes(resolved, json, tz);
+                // tempPath was derived from the old dest; MoveUnique moves across
+                // directories, so only the destination needs recomputing.
+                dest = pathBuilder.BuildPath(options.OutputDirectory, media, localDate);
+                outcome = outcome with { DateSource = resolved.Source.ToString(), DestinationPath = dest };
+            }
 
             // De-duplication is an atomic claim on the content hash: exactly one media
             // file owns a given hash and produces the canonical file; identical files
@@ -349,6 +346,28 @@ public sealed class ProcessingPipeline
             // but an exception mid-flight would otherwise litter the output tree).
             if (LongPath.Exists(tempPath)) TryDelete(tempPath);
         }
+    }
+
+    /// <summary>
+    /// Computes the local capture time, UTC instant, and EXIF offset string for a
+    /// resolved date: UTC instants are localized via the GPS timezone (or fallback),
+    /// naive wall-clock values are used as-is.
+    /// </summary>
+    private static (DateTime? Local, DateTime? Utc, string? Offset) ComputeTimes(
+        ResolvedDate resolved, TakeoutJson? json, TimezoneResolver tz)
+    {
+        if (!resolved.HasValue)
+            return (null, null, null);
+
+        if (!resolved.IsUtc)
+            return (resolved.Value, resolved.Value, null); // already local wall-clock
+
+        var instant = new DateTimeOffset(resolved.Value, TimeSpan.Zero);
+        var local = tz.ResolveLocal(instant, json?.BestGeo);
+        var offset = local.Offset == TimeSpan.Zero && json?.BestGeo is not { IsPresent: true }
+            ? null
+            : FormatOffset(local.Offset);
+        return (local.DateTime, instant.UtcDateTime, offset);
     }
 
     /// <summary>
