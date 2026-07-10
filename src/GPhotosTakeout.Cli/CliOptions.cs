@@ -10,8 +10,9 @@ internal sealed class CliOptions
     public OutputStructure Structure { get; private set; } = OutputStructure.YearMonth;
     public AlbumStrategy Albums { get; private set; } = AlbumStrategy.Shortcut;
     public DuplicateHandling Duplicates { get; private set; } = DuplicateHandling.KeepBest;
-    public string? Timezone { get; private set; } = ProcessingOptions.DefaultFallbackTimeZone;
+    public string? Timezone { get; private set; } = ProcessingOptions.GetDefaultFallbackTimeZone();
     public bool WriteMetadata { get; private set; } = true;
+    public bool UseExifFallback { get; private set; } = true;
     public string? ExifToolPath { get; private set; }
     public int? Cpu { get; private set; }
     public int? ExifParallel { get; private set; }
@@ -33,6 +34,7 @@ internal sealed class CliOptions
             DuplicateHandling = Duplicates,
             FallbackTimeZone = string.IsNullOrWhiteSpace(Timezone) ? null : Timezone,
             WriteMetadata = WriteMetadata,
+            UseExifFallback = UseExifFallback,
             DryRun = DryRun,
         };
         if (Cpu is { } cpu) opt = opt with { CpuParallelism = cpu };
@@ -53,10 +55,11 @@ internal sealed class CliOptions
                 case "-i" or "--input": o.Inputs.Add(Next(args, ref i, a)); break;
                 case "-o" or "--output": o.Output = Next(args, ref i, a); break;
                 case "--structure": o.Structure = ParseEnum<OutputStructure>(Next(args, ref i, a), a); break;
-                case "--albums": o.Albums = ParseEnum<AlbumStrategy>(Next(args, ref i, a), a); break;
+                case "--albums": o.Albums = ParseAlbumStrategy(Next(args, ref i, a), a); break;
                 case "--duplicates": o.Duplicates = ParseEnum<DuplicateHandling>(Next(args, ref i, a), a); break;
                 case "--timezone": o.Timezone = Next(args, ref i, a); break;
                 case "--no-metadata": o.WriteMetadata = false; break;
+                case "--no-exif-fallback": o.UseExifFallback = false; break;
                 case "--exiftool": o.ExifToolPath = Next(args, ref i, a); break;
                 case "--cpu": o.Cpu = ParseInt(Next(args, ref i, a), a); break;
                 case "--exif-parallel": o.ExifParallel = ParseInt(Next(args, ref i, a), a); break;
@@ -87,8 +90,19 @@ internal sealed class CliOptions
             ? n
             : throw new ArgumentException($"Option {flag} expects an integer, got '{value}'.");
 
+    // The usage text advertises "json" (friendlier than the enum name JsonManifest).
+    private static AlbumStrategy ParseAlbumStrategy(string value, string flag) =>
+        value.Equals("json", StringComparison.OrdinalIgnoreCase)
+            ? AlbumStrategy.JsonManifest
+            : Enum.TryParse<AlbumStrategy>(value, ignoreCase: true, out var v) && !char.IsAsciiDigit(value[0])
+                ? v
+                : throw new ArgumentException(
+                    $"Option {flag} expects one of [shortcut, duplicate, json, nothing], got '{value}'.");
+
     private static T ParseEnum<T>(string value, string flag) where T : struct, Enum =>
-        Enum.TryParse<T>(value, ignoreCase: true, out var v)
+        // Enum.TryParse also accepts bare integers ("1"); reject those — only names
+        // are documented values.
+        Enum.TryParse<T>(value, ignoreCase: true, out var v) && !(value.Length > 0 && char.IsAsciiDigit(value[0]))
             ? v
             : throw new ArgumentException(
                 $"Option {flag} expects one of [{string.Join(", ", Enum.GetNames<T>())}], got '{value}'.");

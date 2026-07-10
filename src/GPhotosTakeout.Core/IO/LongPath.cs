@@ -15,6 +15,11 @@ public static class LongPath
     /// </summary>
     public static string Extended(string path)
     {
+        // "\\?\" is a Windows kernel concept; on other OSes (dev/test runs) the
+        // prefix would just corrupt the path.
+        if (!OperatingSystem.IsWindows())
+            return path;
+
         if (path.StartsWith(@"\\?\", StringComparison.Ordinal))
             return path;
 

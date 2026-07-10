@@ -6,7 +6,37 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-10
+
+### Added
+- Bilingual project roadmap ([ROADMAP.md](ROADMAP.md) / [ROADMAP.he.md](ROADMAP.he.md))
+  describing the phased path to v1.2/v1.3, with priorities and acceptance criteria.
+
+### Added
+- New EXIF date-fallback tier: when the sidecar has no usable date, the capture date
+  embedded in the file itself (EXIF `DateTimeOriginal` for photos, the QuickTime
+  creation time for videos) is read after extraction — via the managed
+  MetadataExtractor library, so it works without ExifTool — and outranks the weaker
+  filename/folder/modified-time tiers. Opt out with `--no-exif-fallback`. Note:
+  dry-run never extracts, so it may report a weaker `DateSource` than the real run.
+- The `duplicate` album strategy now works: identical album copies are placed as
+  physical files under `Albums/<name>/` instead of silently behaving like `nothing`.
+- The `json` album strategy now works end-to-end: `--albums json` parses (it previously
+  exited with a usage error) and the run writes an `albums.json` manifest at the output
+  root mapping each album to its files (paths relative to the output root, forward
+  slashes). Resumed runs merge into the existing manifest instead of overwriting it.
+- Album membership is now also materialized under the `flat` output structure and with
+  `--duplicates keepall` (previously only `yearmonth` + `keepbest`).
+
 ### Fixed
+- Album entries are now created regardless of which copy wins the de-duplication race.
+  Previously the `Albums/` link was created only when the album copy lost the race, so
+  archives where the album copy appeared first produced no album entry at all.
+- The documented last-resort date fallback (file modified time) now actually runs: the
+  ZIP entry's last-write timestamp is captured during indexing and used to date files
+  that have no sidecar, no filename date, and no folder year (`DateSource=FileModified`).
+  Previously such files landed in `Undated` even when the archive carried a usable
+  timestamp.
 - **The App download from v1.1.0 does not launch — do not use it.** The single-file EXE
   build crashed on startup for every user (`STATUS_STOWED_EXCEPTION` in
   `Microsoft.UI.Xaml.dll`), caused by a known, still-open upstream WinUI 3 issue combining
@@ -16,6 +46,16 @@ All notable changes to this project are documented here. The format is based on
   (no XAML/WindowsAppSDK dependency) and remains a single `.exe`.
 
 ### Changed
+- The default fallback timezone is now the machine's own timezone (as an IANA id)
+  instead of a hardcoded `Asia/Jerusalem`. An explicit `--timezone` / app setting still
+  wins.
+- Temp-file cleanup failures are now logged as warnings instead of being silently
+  swallowed.
+- `Package.appxmanifest` is bumped to 1.1.0.0 and the MSIX workflow now rewrites the
+  manifest version from `Directory.Build.props`, so the two can no longer drift.
+- The CLI argument parser is now covered by unit tests (~30 cases: defaults, every
+  flag, enum aliases, and error paths), and the CI line-coverage gate was raised from
+  60% to 65%.
 - Release pipeline can now also be run manually (`workflow_dispatch`) for testing without
   pushing a tag.
 - README/README.he clarify which downloaded file is the App and which is the CLI, and show
@@ -49,6 +89,7 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.0
 [1.1.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.1.0
 [1.0.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.0.0

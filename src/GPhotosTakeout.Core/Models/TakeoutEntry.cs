@@ -22,5 +22,12 @@ public sealed record TakeoutEntry
     /// <summary>Uncompressed size in bytes, from the ZIP directory (cheap to read).</summary>
     public long Length { get; init; }
 
+    /// <summary>
+    /// Entry last-write time from the ZIP directory. DOS timestamps carry no timezone
+    /// and bottom out at 1980; null when absent or invalid. Used only as the
+    /// last-resort date fallback tier.
+    /// </summary>
+    public DateTimeOffset? LastWriteTime { get; init; }
+
     public bool IsSidecar => Matching.FilenameNormalizer.IsSidecar(FileName);
 }

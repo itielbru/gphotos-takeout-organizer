@@ -217,9 +217,14 @@ public class ErrorHandlingTests : IDisposable
         // With KeepAll, duplicates counter stays at zero.
         Assert.Equal(0, report.Duplicates);
         Assert.Equal(0, report.Errors);
-        // All copies placed (unique names).
-        var placed = Directory.EnumerateFiles(output, "IMG*.jpg", SearchOption.AllDirectories).Count();
+        // All copies placed (unique names) in the main library. Album membership is
+        // additionally materialized under Albums/ (default Shortcut strategy), so the
+        // count is scoped to ALL_PHOTOS.
+        var placed = Directory.EnumerateFiles(Path.Combine(output, "ALL_PHOTOS"), "IMG*.jpg",
+            SearchOption.AllDirectories).Count();
         Assert.Equal(copies, placed);
+        Assert.True(Directory.Exists(Path.Combine(output, "Albums")),
+            "album membership should be materialized under Albums/ even with KeepAll");
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────

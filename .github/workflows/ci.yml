@@ -11,7 +11,7 @@ jobs:
   build-test:
     runs-on: windows-latest
     env:
-      MIN_LINE: 60
+      MIN_LINE: 65
     steps:
       - uses: actions/checkout@v7
 

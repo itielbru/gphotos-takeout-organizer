@@ -56,6 +56,8 @@ public sealed class TakeoutArchiveReader : IDisposable
                     Path = entry.FullName,
                     ArchiveId = archiveId,
                     Length = entry.Length,
+                    // 1980-01-01 is the DOS epoch a ZIP writer emits for "no timestamp".
+                    LastWriteTime = entry.LastWriteTime.Year > 1980 ? entry.LastWriteTime : null,
                 });
             }
         }

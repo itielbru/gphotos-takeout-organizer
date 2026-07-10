@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\GPhotosTakeout.Core\GPhotosTakeout.Core.csproj" />
+    <ProjectReference Include="..\..\src\GPhotosTakeout.Cli\GPhotosTakeout.Cli.csproj" />
   </ItemGroup>
 
 </Project>

@@ -153,13 +153,14 @@ Special folders (Archive, Trash, Locked Folder) are always segregated into their
 |----------|-----------|----------|-------------------|
 | Shortcut (symlink → hardlink → copy) | None (unless copy) | Developer Mode for symlinks | Varies |
 | Duplicate | 2× | — | Always works |
-| JSON Manifest | None | Custom parser | Manual |
+| JSON Manifest (`albums.json` at the output root) | None | Custom parser | Manual |
 | Nothing | None | — | No album grouping |
 
 `Shortcut` is the default: it tries a symlink first, falls back to a hardlink on the same drive, then copies. The fallback chain is fully automatic.
 
 ## Documentation
 
+- [ROADMAP.md](ROADMAP.md) — the phased plan to a polished, finished product, with priorities and acceptance criteria.
 - [ARCHITECTURE.md](ARCHITECTURE.md) — engine design, concurrency model, the #353 matching trick, date/timezone hierarchy.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — build, test, and contribution workflow.
 - [SECURITY.md](SECURITY.md) — security policy (no telemetry; processes files locally).

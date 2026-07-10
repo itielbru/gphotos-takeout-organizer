@@ -9,13 +9,17 @@ public class OutputPathBuilderTests
     private static TakeoutEntry Media(string path) =>
         new() { Path = path, ArchiveId = "a.zip", Length = 1 };
 
+    // Builds the expected path with Path.Combine so the assertions hold on any
+    // OS separator (the builder itself uses Path.Combine).
+    private static string P(params string[] parts) => Path.Combine(parts);
+
     [Fact]
     public void YearMonth_GroupsByCaptureDate()
     {
         var builder = new OutputPathBuilder(OutputStructure.YearMonth);
         var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/Photos from 2023/IMG.jpg"),
             new DateTime(2023, 8, 15));
-        Assert.Equal(@"C:\out\ALL_PHOTOS\2023\2023-08\IMG.jpg", p);
+        Assert.Equal(P(@"C:\out", "ALL_PHOTOS", "2023", "2023-08", "IMG.jpg"), p);
     }
 
     [Fact]
@@ -23,7 +27,7 @@ public class OutputPathBuilderTests
     {
         var builder = new OutputPathBuilder(OutputStructure.YearMonth);
         var p = builder.BuildPath(@"C:\out", Media("a/IMG.jpg"), null);
-        Assert.Equal(@"C:\out\ALL_PHOTOS\Undated\IMG.jpg", p);
+        Assert.Equal(P(@"C:\out", "ALL_PHOTOS", "Undated", "IMG.jpg"), p);
     }
 
     [Fact]
@@ -31,7 +35,7 @@ public class OutputPathBuilderTests
     {
         var builder = new OutputPathBuilder(OutputStructure.YearMonth);
         var archive = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/Archive/IMG.jpg"), new DateTime(2023, 1, 1));
-        Assert.Equal(@"C:\out\Archive\IMG.jpg", archive);
+        Assert.Equal(P(@"C:\out", "Archive", "IMG.jpg"), archive);
     }
 
     [Theory]
@@ -58,7 +62,7 @@ public class OutputPathBuilderTests
         var builder = new OutputPathBuilder(OutputStructure.Flat);
         var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/Photos from 2023/IMG.jpg"),
             new DateTime(2023, 8, 15));
-        Assert.Equal(@"C:\out\ALL_PHOTOS\IMG.jpg", p);
+        Assert.Equal(P(@"C:\out", "ALL_PHOTOS", "IMG.jpg"), p);
     }
 
     [Fact]
@@ -66,7 +70,7 @@ public class OutputPathBuilderTests
     {
         var builder = new OutputPathBuilder(OutputStructure.Flat);
         var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/SummerTrip/IMG.jpg"), null);
-        Assert.Equal(@"C:\out\ALL_PHOTOS\IMG.jpg", p);
+        Assert.Equal(P(@"C:\out", "ALL_PHOTOS", "IMG.jpg"), p);
     }
 
     [Fact]
@@ -85,7 +89,7 @@ public class OutputPathBuilderTests
     {
         var builder = new OutputPathBuilder(OutputStructure.Albums);
         var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/My Trip/IMG.jpg"), null);
-        Assert.Equal(@"C:\out\My Trip\IMG.jpg", p);
+        Assert.Equal(P(@"C:\out", "My Trip", "IMG.jpg"), p);
     }
 
     [Fact]
@@ -95,7 +99,7 @@ public class OutputPathBuilderTests
         var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/Photos from 2023/IMG.jpg"),
             new DateTime(2023, 8, 15));
         // "Photos from 2023" is just a folder name in Albums mode.
-        Assert.Equal(@"C:\out\Photos from 2023\IMG.jpg", p);
+        Assert.Equal(P(@"C:\out", "Photos from 2023", "IMG.jpg"), p);
     }
 
     // ── Special folder edge cases ────────────────────────────────────────────
@@ -120,7 +124,7 @@ public class OutputPathBuilderTests
             Media("Takeout/Google Photos/Locked Folder/secret.jpg"),
             new DateTime(2023, 1, 1));
         // Special folders bypass the ALL_PHOTOS tree entirely.
-        Assert.StartsWith(@"C:\out\LockedFolder\", p, StringComparison.Ordinal);
+        Assert.StartsWith(P(@"C:\out", "LockedFolder") + Path.DirectorySeparatorChar, p, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -130,6 +134,6 @@ public class OutputPathBuilderTests
         var p = builder.BuildPath(@"C:\out",
             Media("Takeout/Google Photos/Trash/deleted.jpg"),
             new DateTime(2023, 1, 1));
-        Assert.StartsWith(@"C:\out\Trash\", p, StringComparison.Ordinal);
+        Assert.StartsWith(P(@"C:\out", "Trash") + Path.DirectorySeparatorChar, p, StringComparison.Ordinal);
     }
 }

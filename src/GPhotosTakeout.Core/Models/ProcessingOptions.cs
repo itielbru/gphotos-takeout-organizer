@@ -18,7 +18,7 @@ public enum AlbumStrategy
     Shortcut,
     /// <summary>Physically duplicate files into each album folder.</summary>
     Duplicate,
-    /// <summary>One folder + albums-info.json describing membership.</summary>
+    /// <summary>One folder + an albums.json manifest at the output root describing membership.</summary>
     JsonManifest,
     /// <summary>Ignore album structure entirely.</summary>
     Nothing,
@@ -36,8 +36,18 @@ public enum DuplicateHandling
 /// <summary>All user-chosen settings for one processing run.</summary>
 public sealed record ProcessingOptions
 {
-    /// <summary>Default IANA timezone used when a photo has no GPS and the user hasn't overridden it.</summary>
-    public const string DefaultFallbackTimeZone = "Asia/Jerusalem";
+    /// <summary>
+    /// Default fallback timezone when a photo has no GPS and the user hasn't overridden
+    /// it: the machine's own timezone as an IANA id (a Takeout is usually processed
+    /// where its owner lives). Null when the system zone can't be mapped to IANA.
+    /// </summary>
+    public static string? GetDefaultFallbackTimeZone()
+    {
+        var local = TimeZoneInfo.Local;
+        if (local.HasIanaId)
+            return local.Id;
+        return TimeZoneInfo.TryConvertWindowsIdToIanaId(local.Id, out var iana) ? iana : null;
+    }
     public required IReadOnlyList<string> InputZipPaths { get; init; }
     public required string OutputDirectory { get; init; }
 
@@ -50,6 +60,13 @@ public sealed record ProcessingOptions
 
     /// <summary>Write EXIF/metadata into media (requires bundled ExifTool).</summary>
     public bool WriteMetadata { get; init; } = true;
+
+    /// <summary>
+    /// When the sidecar has no usable date, read the capture date embedded in the file
+    /// itself (EXIF / QuickTime) after extraction and prefer it over the weaker
+    /// filename/folder/modified-time tiers. Managed reader — works without ExifTool.
+    /// </summary>
+    public bool UseExifFallback { get; init; } = true;
 
     /// <summary>Parallelism for CPU-bound stages (indexing, hashing, matching).</summary>
     public int CpuParallelism { get; init; } = Math.Max(2, Environment.ProcessorCount - 2);

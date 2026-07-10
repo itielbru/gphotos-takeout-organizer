@@ -43,15 +43,15 @@ public sealed class DateResolver
     public ResolvedDate Resolve(
         string fileName,
         TakeoutJson? json,
-        DateTime? exifDateLocal,
+        ExifDate? exif,
         string? folder,
         DateTime? fileModifiedUtc)
     {
         if (json?.CapturedUtc is { } captured)
             return new ResolvedDate(captured.UtcDateTime, DateSource.Json, IsUtc: true);
 
-        if (exifDateLocal is { } exif)
-            return new ResolvedDate(exif, DateSource.Exif, IsUtc: false);
+        if (exif is { } e)
+            return new ResolvedDate(e.Value, DateSource.Exif, e.IsUtc);
 
         if (TryFromFilename(fileName, out var fromName))
             return new ResolvedDate(fromName, DateSource.Filename, IsUtc: false);

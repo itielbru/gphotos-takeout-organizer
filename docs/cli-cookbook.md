@@ -54,7 +54,7 @@ Disables de-duplication. Identical files in multiple albums each get their own c
 
 ```powershell
 # Year/month tree (default)
-gptakeout -i takeout.zip -o D:\Photos --structure year-month
+gptakeout -i takeout.zip -o D:\Photos --structure yearmonth
 
 # All files flat in one folder
 gptakeout -i takeout.zip -o D:\Photos --structure flat
@@ -65,7 +65,7 @@ gptakeout -i takeout.zip -o D:\Photos --structure albums
 
 ---
 
-## Album shortcut strategy
+## Album strategies
 
 ```powershell
 # Symlink / hardlink / copy fallback (default)
@@ -74,9 +74,34 @@ gptakeout -i takeout.zip -o D:\Photos --albums shortcut
 # Duplicate every album photo (safest, most disk space)
 gptakeout -i takeout.zip -o D:\Photos --albums duplicate
 
+# No Albums folder — write an albums.json manifest at the output root instead
+gptakeout -i takeout.zip -o D:\Photos --albums json
+
 # No album output at all
 gptakeout -i takeout.zip -o D:\Photos --albums nothing
 ```
+
+The `json` manifest maps each album to its files, with paths relative to the output
+root (forward slashes), so it survives moving the library:
+
+```json
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-07-10T12:00:00Z",
+  "albums": [
+    {
+      "name": "Trip to Eilat",
+      "files": [
+        { "fileName": "IMG_1234.jpg", "path": "ALL_PHOTOS/2023/2023-08/IMG_1234.jpg" }
+      ]
+    }
+  ]
+}
+```
+
+Note: with `--duplicates keepall`, identical album copies are *also* kept as physical
+files in `ALL_PHOTOS` (with a `(1)` suffix) in addition to the album materialization —
+`keepall` disables de-duplication entirely.
 
 ---
 

@@ -6,8 +6,9 @@
 
 - **No GPS, no fallback** → timestamps stay as UTC, and the year/month folder is based on UTC midnight. Set `--timezone` (CLI) or the "Fallback timezone" field (app) to your local IANA ID (e.g. `America/New_York`).
 - **GPS present but wrong zone** → this should resolve correctly via GeoTimeZone. If a remote/rural coordinate maps to the wrong zone, please open an issue with the coordinates.
-- **No sidecar file at all** → the tool falls back to filename patterns (`IMG_20230815_*`, `VID_20230815_*`) and then marks the file as Undated if no date can be inferred.
+- **No sidecar file at all** → the tool reads the capture date embedded in the file itself (EXIF `DateTimeOriginal` for photos, the QuickTime creation time for videos), then falls back to filename patterns (`IMG_20230815_*`, `VID_20230815_*`), the album-folder year, and finally the archive's file-modified timestamp. Disable the embedded-date read with `--no-exif-fallback` if you don't trust your files' EXIF clocks.
 - **Undated folder** → intentional; do not delete it. Files in `Undated` had no recoverable date from any source.
+- **Dry-run shows a weaker date source than the real run** → expected. `--dry-run` never extracts files, so it cannot read dates embedded in them; a file reported as `Filename`/`FileModified` in the dry-run may resolve as `Exif` in the real run.
 
 ---
 

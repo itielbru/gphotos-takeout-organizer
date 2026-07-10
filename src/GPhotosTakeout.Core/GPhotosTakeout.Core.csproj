@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="GeoTimeZone" Version="5.3.0" />
+    <PackageReference Include="MetadataExtractor" Version="2.8.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
   </ItemGroup>
 

@@ -56,6 +56,7 @@ public sealed class ProcessingPipeline
         var dateResolver = new DateResolver();
         var dedup = new HashDeduplicator();
         var linker = new AlbumLinker();
+        var albumManifest = new AlbumManifestCollector();
         var pathBuilder = new OutputPathBuilder(options.OutputStructure);
 
         var counters = new Counters();
@@ -89,7 +90,7 @@ public sealed class ProcessingPipeline
                         else Interlocked.Increment(ref counters.Unmatched);
 
                         var outcome = await ProcessOneAsync(match, options, reader, dateResolver, tz, pathBuilder,
-                            dedup, linker, exifPool, counters, options.DryRun, token).ConfigureAwait(false);
+                            dedup, linker, albumManifest, exifPool, counters, options.DryRun, _logger, token).ConfigureAwait(false);
                         outcomes.Add(outcome);
 
                         if (!options.DryRun) journal.MarkDone(key);
@@ -132,6 +133,23 @@ public sealed class ProcessingPipeline
             // Expected when the user cancels: fall through and return a partial
             // report (already-done work is persisted in the journal for resume).
             _logger.LogInformation("Run cancelled after {Processed}/{Total} files", processed, media.Count);
+        }
+
+        // Persist album membership for the JsonManifest strategy. Written even after a
+        // cancel so a partial run leaves a usable manifest; WriteAsync merges with any
+        // manifest from a previous (resumed) run so already-journaled files aren't lost.
+        if (!options.DryRun && options.AlbumStrategy == AlbumStrategy.JsonManifest && albumManifest.HasEntries)
+        {
+            try
+            {
+                await albumManifest.WriteAsync(options.OutputDirectory, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+            {
+                Interlocked.Increment(ref counters.Errors);
+                errors.Add($"Could not write {AlbumManifestCollector.FileName}: {ex.Message}");
+                _logger.LogWarning(ex, "Could not write album manifest");
+            }
         }
 
         // Surface any ExifTool stderr that accumulated during the run; otherwise
@@ -190,8 +208,8 @@ public sealed class ProcessingPipeline
     private static async Task<FileOutcome> ProcessOneAsync(
         MatchResult match, ProcessingOptions options, TakeoutArchiveReader reader,
         DateResolver dateResolver, TimezoneResolver tz, OutputPathBuilder pathBuilder,
-        HashDeduplicator dedup, AlbumLinker linker, ExifToolPool? exifPool,
-        Counters counters, bool dryRun, CancellationToken ct)
+        HashDeduplicator dedup, AlbumLinker linker, AlbumManifestCollector albumManifest,
+        ExifToolPool? exifPool, Counters counters, bool dryRun, ILogger logger, CancellationToken ct)
     {
         var media = match.Media;
 
@@ -202,29 +220,11 @@ public sealed class ProcessingPipeline
             json = TakeoutJson.Parse(System.Text.Encoding.UTF8.GetString(bytes));
         }
 
-        var resolved = dateResolver.Resolve(media.FileName, json, exifDateLocal: null, media.Folder, fileModifiedUtc: null);
+        var resolved = dateResolver.Resolve(
+            media.FileName, json, exif: null, media.Folder,
+            fileModifiedUtc: media.LastWriteTime?.UtcDateTime);
 
-        // Compute local capture time + offset for metadata and for the year/month folder.
-        DateTime? localDate = null, utcDate = null;
-        string? offset = null;
-        if (resolved.HasValue)
-        {
-            if (resolved.IsUtc)
-            {
-                var instant = new DateTimeOffset(resolved.Value, TimeSpan.Zero);
-                var local = tz.ResolveLocal(instant, json?.BestGeo);
-                localDate = local.DateTime;
-                utcDate = instant.UtcDateTime;
-                offset = local.Offset == TimeSpan.Zero && json?.BestGeo is not { IsPresent: true }
-                    ? null
-                    : FormatOffset(local.Offset);
-            }
-            else
-            {
-                localDate = resolved.Value; // already local wall-clock
-                utcDate = resolved.Value;
-            }
-        }
+        var (localDate, utcDate, offset) = ComputeTimes(resolved, json, tz);
 
         var isSpecial = OutputPathBuilder.Classify(media.Folder) != SpecialFolder.None;
         if (isSpecial) Interlocked.Increment(ref counters.SpecialItems);
@@ -244,11 +244,13 @@ public sealed class ProcessingPipeline
         if (dryRun)
             return outcome with { Planned = true };
 
-        // Album shortcut handling: an album copy that duplicates the main-library
-        // copy becomes a link to the canonical file instead of a second extraction.
+        // Album handling: under YearMonth/Flat structures album folders collapse into
+        // ALL_PHOTOS, so membership must be materialized separately (link, copy, or
+        // manifest entry, per AlbumStrategy). The Albums structure keeps album folders
+        // as real output folders, so nothing extra is needed there.
         var isAlbumCopy = !isSpecial
                           && !OutputPathBuilder.IsMainLibraryFolder(media.Folder)
-                          && options.OutputStructure == OutputStructure.YearMonth;
+                          && options.OutputStructure != OutputStructure.Albums;
 
         // Extract to a per-entry temp file first so dedup can decide before we ever
         // touch the canonical destination (two copies can map to the same dest path).
@@ -258,6 +260,23 @@ public sealed class ProcessingPipeline
         try
         {
             var extract = await reader.ExtractAsync(media, tempPath, ct).ConfigureAwait(false);
+
+            // Second-chance date resolve: a capture date embedded in the file (EXIF /
+            // QuickTime) outranks the filename/folder/modified-time tiers but is only
+            // readable once the bytes exist on disk. Dry-run never gets here, so its
+            // report can show a weaker DateSource than the real run will use.
+            if (options.UseExifFallback && resolved.Source != DateSource.Json
+                && ExifDateReader.TryRead(tempPath) is { } exifDate)
+            {
+                resolved = dateResolver.Resolve(
+                    media.FileName, json, exifDate, media.Folder,
+                    fileModifiedUtc: media.LastWriteTime?.UtcDateTime);
+                (localDate, utcDate, offset) = ComputeTimes(resolved, json, tz);
+                // tempPath was derived from the old dest; MoveUnique moves across
+                // directories, so only the destination needs recomputing.
+                dest = pathBuilder.BuildPath(options.OutputDirectory, media, localDate);
+                outcome = outcome with { DateSource = resolved.Source.ToString(), DestinationPath = dest };
+            }
 
             // De-duplication is an atomic claim on the content hash: exactly one media
             // file owns a given hash and produces the canonical file; identical files
@@ -278,18 +297,16 @@ public sealed class ProcessingPipeline
                         // instead of discarding it (avoids losing the only remaining one).
                         var (salvageDest, salvageWrote) = await PlaceAndTagAsync(
                             tempPath, dest, json, localDate, utcDate, offset, exifPool, counters, ct).ConfigureAwait(false);
+                        if (isAlbumCopy)
+                            MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, salvageDest);
                         return outcome with { DestinationPath = salvageDest, MetadataWritten = salvageWrote };
                     }
 
                     Interlocked.Increment(ref counters.Duplicates);
-                    TryDelete(tempPath);
+                    TryDelete(tempPath, logger);
 
-                    if (isAlbumCopy && options.AlbumStrategy == AlbumStrategy.Shortcut)
-                    {
-                        var albumName = LastSegment(media.Folder);
-                        var linkPath = Path.Combine(options.OutputDirectory, "Albums", albumName, media.FileName);
-                        linker.Link(canonical, linkPath);
-                    }
+                    if (isAlbumCopy)
+                        MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, canonical);
                     return outcome with { IsDuplicate = true, DestinationPath = canonical };
                 }
 
@@ -303,6 +320,11 @@ public sealed class ProcessingPipeline
                     published = true;
                     var wrote = await TagAsync(finalDest, json, localDate, utcDate, offset, exifPool, counters, ct)
                         .ConfigureAwait(false);
+                    // An album copy that wins the dedup race still lands in ALL_PHOTOS
+                    // (the path builder ignores the album folder), so its album entry
+                    // must be materialized here too — not only on the duplicate path.
+                    if (isAlbumCopy)
+                        MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, finalDest);
                     return outcome with { DestinationPath = finalDest, MetadataWritten = wrote };
                 }
                 finally
@@ -314,13 +336,64 @@ public sealed class ProcessingPipeline
             // KeepAll: no de-duplication, just place and tag every copy.
             var (placedDest, placedWrote) = await PlaceAndTagAsync(
                 tempPath, dest, json, localDate, utcDate, offset, exifPool, counters, ct).ConfigureAwait(false);
+            if (isAlbumCopy)
+                MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, placedDest);
             return outcome with { DestinationPath = placedDest, MetadataWritten = placedWrote };
         }
         finally
         {
             // Never leave an orphaned .part behind (the happy paths move/delete it,
             // but an exception mid-flight would otherwise litter the output tree).
-            if (LongPath.Exists(tempPath)) TryDelete(tempPath);
+            if (LongPath.Exists(tempPath)) TryDelete(tempPath, logger);
+        }
+    }
+
+    /// <summary>
+    /// Computes the local capture time, UTC instant, and EXIF offset string for a
+    /// resolved date: UTC instants are localized via the GPS timezone (or fallback),
+    /// naive wall-clock values are used as-is.
+    /// </summary>
+    private static (DateTime? Local, DateTime? Utc, string? Offset) ComputeTimes(
+        ResolvedDate resolved, TakeoutJson? json, TimezoneResolver tz)
+    {
+        if (!resolved.HasValue)
+            return (null, null, null);
+
+        if (!resolved.IsUtc)
+            return (resolved.Value, resolved.Value, null); // already local wall-clock
+
+        var instant = new DateTimeOffset(resolved.Value, TimeSpan.Zero);
+        var local = tz.ResolveLocal(instant, json?.BestGeo);
+        var offset = local.Offset == TimeSpan.Zero && json?.BestGeo is not { IsPresent: true }
+            ? null
+            : FormatOffset(local.Offset);
+        return (local.DateTime, instant.UtcDateTime, offset);
+    }
+
+    /// <summary>
+    /// Materializes one album membership according to the chosen strategy: a link
+    /// (Shortcut), a physical copy (Duplicate), a manifest entry (JsonManifest), or
+    /// nothing. <paramref name="canonicalPath"/> is where the file's content lives.
+    /// </summary>
+    private static void MaterializeAlbumEntry(
+        ProcessingOptions options, AlbumLinker linker, AlbumManifestCollector albumManifest,
+        string folder, string fileName, string canonicalPath)
+    {
+        var albumName = LastSegment(folder);
+        switch (options.AlbumStrategy)
+        {
+            case AlbumStrategy.Shortcut:
+                linker.Link(canonicalPath, Path.Combine(options.OutputDirectory, "Albums", albumName, fileName));
+                break;
+            case AlbumStrategy.Duplicate:
+                linker.Copy(canonicalPath, Path.Combine(options.OutputDirectory, "Albums", albumName, fileName));
+                break;
+            case AlbumStrategy.JsonManifest:
+                albumManifest.Record(albumName, fileName, canonicalPath);
+                break;
+            case AlbumStrategy.Nothing:
+            default:
+                break;
         }
     }
 
@@ -418,9 +491,17 @@ public sealed class ProcessingPipeline
     private static string FormatOffset(TimeSpan offset) =>
         (offset < TimeSpan.Zero ? "-" : "+") + offset.ToString(@"hh\:mm", System.Globalization.CultureInfo.InvariantCulture);
 
-    private static void TryDelete(string path)
+    private static void TryDelete(string path, ILogger logger)
     {
-        try { File.Delete(LongPath.Extended(path)); } catch { /* best effort */ }
+        try
+        {
+            File.Delete(LongPath.Extended(path));
+        }
+        catch (Exception ex)
+        {
+            // Best-effort cleanup of a temp .part file; the media itself is safe.
+            logger.LogWarning(ex, "Could not delete temp file {Path}", path);
+        }
     }
 
     private static readonly char[] PathSeparators = ['/', '\\'];

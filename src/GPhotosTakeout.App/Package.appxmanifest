@@ -6,11 +6,12 @@
   IgnorableNamespaces="uap rescap">
 
   <!-- Publisher is a placeholder for local/dev signing; the Microsoft Store assigns the
-       real Identity (Name/Publisher) on submission. Version: Major.Minor.Build.Revision. -->
+       real Identity (Name/Publisher) on submission. Version: Major.Minor.Build.Revision —
+       the MSIX workflow rewrites it from Directory.Build.props before packaging. -->
   <Identity
     Name="GPhotosTakeout.App"
     Publisher="CN=GPhotosTakeout"
-    Version="1.0.0.0" />
+    Version="1.2.0.0" />
 
   <Properties>
     <DisplayName>Google Photos Takeout Organizer</DisplayName>

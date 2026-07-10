@@ -5,22 +5,33 @@ namespace GPhotosTakeout.Tests;
 
 public class LongPathTests
 {
+    // "\\?\" is Windows-only; on other OSes Extended is a passthrough, so each
+    // expectation below depends on the OS the suite runs on.
+
     [Fact]
     public void Extended_PrefixesFullyQualifiedPath()
     {
-        Assert.Equal(@"\\?\C:\a\b.jpg", LongPath.Extended(@"C:\a\b.jpg"));
+        var expected = OperatingSystem.IsWindows() ? @"\\?\C:\a\b.jpg" : @"C:\a\b.jpg";
+        Assert.Equal(expected, LongPath.Extended(@"C:\a\b.jpg"));
     }
 
     [Fact]
     public void Extended_NormalizesForwardSlashes()
     {
         // "\\?\" paths are used verbatim by the OS, so '/' must become '\'.
-        Assert.Equal(@"\\?\C:\a\b.jpg", LongPath.Extended("C:/a/b.jpg"));
+        var expected = OperatingSystem.IsWindows() ? @"\\?\C:\a\b.jpg" : "C:/a/b.jpg";
+        Assert.Equal(expected, LongPath.Extended("C:/a/b.jpg"));
     }
 
     [Fact]
     public void Extended_HandlesUncPaths()
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Equal(@"\\server\share\f.jpg", LongPath.Extended(@"\\server\share\f.jpg"));
+            return;
+        }
+
         Assert.Equal(@"\\?\UNC\server\share\f.jpg", LongPath.Extended(@"\\server\share\f.jpg"));
         Assert.Equal(@"\\?\UNC\server\share\f.jpg", LongPath.Extended("//server/share/f.jpg"));
     }

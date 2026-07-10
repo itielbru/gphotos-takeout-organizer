@@ -14,4 +14,8 @@
     <ProjectReference Include="..\GPhotosTakeout.Core\GPhotosTakeout.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="GPhotosTakeout.Tests" />
+  </ItemGroup>
+
 </Project>

@@ -112,7 +112,7 @@ output/                        output/                  output/
 |----------|------------|---------|-------------------------|
 | Shortcut (symlink → hardlink → copy) | ללא (אלא אם copy) | Developer Mode עבור symlinks | משתנה |
 | Duplicate | כפול | — | תמיד עובד |
-| JSON Manifest | ללא | מנתח ייחודי | ידני |
+| JSON Manifest (`albums.json` בשורש הפלט) | ללא | מנתח ייחודי | ידני |
 | Nothing | ללא | — | ללא ארגון אלבומים |
 
 `Shortcut` הוא ברירת המחדל: מנסה symlink קודם, נופל ל-hardlink באותו כונן, ואז מעתיק. שרשרת ה-fallback אוטומטית לחלוטין.
@@ -159,6 +159,7 @@ GPhotosTakeout.sln
 
 ## תיעוד
 
+- [ROADMAP.he.md](ROADMAP.he.md) — התוכנית המדורגת למוצר מלוטש ומוגמר, עם עדיפויות וקריטריוני קבלה.
 - [ARCHITECTURE.md](ARCHITECTURE.md) — תכנון המנוע, מודל המקביליות, טריק ה-#353, היררכיית תאריך/timezone.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — בנייה, בדיקות, ותהליך התרומה.
 - [SECURITY.md](SECURITY.md) — מדיניות אבטחה (ללא טלמטריה; מעבד קבצים מקומית).
