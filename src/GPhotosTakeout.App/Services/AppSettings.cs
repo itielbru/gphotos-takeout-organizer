@@ -7,7 +7,8 @@ public sealed record AppSettings
     public int OutputStructureIndex { get; init; }
     public int AlbumStrategyIndex { get; init; }
     public int DuplicateHandlingIndex { get; init; }
-    public string? FallbackTimeZone { get; init; } = "Asia/Jerusalem";
+    /// <summary>Null = use the system timezone (resolved at load time).</summary>
+    public string? FallbackTimeZone { get; init; }
     public bool DryRun { get; init; }
 
     /// <summary>UI language ("he" / "en"); null = follow the OS. Reserved for i18n.</summary>

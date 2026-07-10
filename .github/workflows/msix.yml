@@ -15,6 +15,18 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Sync manifest version from Directory.Build.props
+        shell: pwsh
+        run: |
+          [xml]$props = Get-Content Directory.Build.props
+          $version = ($props.Project.PropertyGroup.Version | Where-Object { $_ }) | Select-Object -First 1
+          if (-not $version) { Write-Error "No <Version> found in Directory.Build.props"; exit 1 }
+          $manifestPath = "src/GPhotosTakeout.App/Package.appxmanifest"
+          [xml]$manifest = Get-Content $manifestPath
+          $manifest.Package.Identity.Version = "$version.0"
+          $manifest.Save((Resolve-Path $manifestPath))
+          Write-Host "Package.appxmanifest Identity/@Version set to $version.0"
+
       - name: Build MSIX (Store, x64, unsigned)
         run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64 -p:Packaging=true
 

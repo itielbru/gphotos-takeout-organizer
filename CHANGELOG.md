@@ -44,6 +44,13 @@ All notable changes to this project are documented here. The format is based on
   (no XAML/WindowsAppSDK dependency) and remains a single `.exe`.
 
 ### Changed
+- The default fallback timezone is now the machine's own timezone (as an IANA id)
+  instead of a hardcoded `Asia/Jerusalem`. An explicit `--timezone` / app setting still
+  wins.
+- Temp-file cleanup failures are now logged as warnings instead of being silently
+  swallowed.
+- `Package.appxmanifest` is bumped to 1.1.0.0 and the MSIX workflow now rewrites the
+  manifest version from `Directory.Build.props`, so the two can no longer drift.
 - The CLI argument parser is now covered by unit tests (~30 cases: defaults, every
   flag, enum aliases, and error paths), and the CI line-coverage gate was raised from
   60% to 65%.

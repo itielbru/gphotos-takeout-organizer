@@ -38,7 +38,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _outputStructureIndex = s.OutputStructureIndex;
         _albumStrategyIndex = s.AlbumStrategyIndex;
         _duplicateHandlingIndex = s.DuplicateHandlingIndex;
-        _fallbackTimeZone = s.FallbackTimeZone ?? ProcessingOptions.DefaultFallbackTimeZone;
+        _fallbackTimeZone = s.FallbackTimeZone ?? ProcessingOptions.GetDefaultFallbackTimeZone();
         _dryRun = s.DryRun;
 
         var lang = Localization.FromCode(s.Language);
@@ -106,7 +106,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _duplicateHandlingIndex; // 0 keep best, 1 keep all
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasTimezoneError))]
-    private string? _fallbackTimeZone = ProcessingOptions.DefaultFallbackTimeZone;
+    private string? _fallbackTimeZone = ProcessingOptions.GetDefaultFallbackTimeZone();
     [ObservableProperty] private bool _dryRun;
 
     // Live timezone validation for Step 2 (empty is allowed — it's optional).
@@ -202,7 +202,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(StatDuplicates));
         OnPropertyChanged(nameof(StatMetadata));
         OnPropertyChanged(nameof(StatErrors));
-        ExportReportCommand.NotifyCanExecuteChanged();
 
         ReportErrors.Clear();
         if (value is not null)
@@ -408,9 +407,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         ValidationMessage = null;
         Step = WizardStep.Source;
     }
-
-    [RelayCommand(CanExecute = nameof(CanExportReport))]
-    private Task ExportReport() => Task.CompletedTask; // actual export is driven from the window (needs a save picker)
 
     /// <summary>Writes the current report to the given path (.csv → CSV, else JSON).</summary>
     public async Task ExportReportAsync(string path)

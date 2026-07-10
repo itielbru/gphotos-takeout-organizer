@@ -36,8 +36,18 @@ public enum DuplicateHandling
 /// <summary>All user-chosen settings for one processing run.</summary>
 public sealed record ProcessingOptions
 {
-    /// <summary>Default IANA timezone used when a photo has no GPS and the user hasn't overridden it.</summary>
-    public const string DefaultFallbackTimeZone = "Asia/Jerusalem";
+    /// <summary>
+    /// Default fallback timezone when a photo has no GPS and the user hasn't overridden
+    /// it: the machine's own timezone as an IANA id (a Takeout is usually processed
+    /// where its owner lives). Null when the system zone can't be mapped to IANA.
+    /// </summary>
+    public static string? GetDefaultFallbackTimeZone()
+    {
+        var local = TimeZoneInfo.Local;
+        if (local.HasIanaId)
+            return local.Id;
+        return TimeZoneInfo.TryConvertWindowsIdToIanaId(local.Id, out var iana) ? iana : null;
+    }
     public required IReadOnlyList<string> InputZipPaths { get; init; }
     public required string OutputDirectory { get; init; }
 

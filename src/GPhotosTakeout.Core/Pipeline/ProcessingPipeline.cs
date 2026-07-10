@@ -90,7 +90,7 @@ public sealed class ProcessingPipeline
                         else Interlocked.Increment(ref counters.Unmatched);
 
                         var outcome = await ProcessOneAsync(match, options, reader, dateResolver, tz, pathBuilder,
-                            dedup, linker, albumManifest, exifPool, counters, options.DryRun, token).ConfigureAwait(false);
+                            dedup, linker, albumManifest, exifPool, counters, options.DryRun, _logger, token).ConfigureAwait(false);
                         outcomes.Add(outcome);
 
                         if (!options.DryRun) journal.MarkDone(key);
@@ -209,7 +209,7 @@ public sealed class ProcessingPipeline
         MatchResult match, ProcessingOptions options, TakeoutArchiveReader reader,
         DateResolver dateResolver, TimezoneResolver tz, OutputPathBuilder pathBuilder,
         HashDeduplicator dedup, AlbumLinker linker, AlbumManifestCollector albumManifest,
-        ExifToolPool? exifPool, Counters counters, bool dryRun, CancellationToken ct)
+        ExifToolPool? exifPool, Counters counters, bool dryRun, ILogger logger, CancellationToken ct)
     {
         var media = match.Media;
 
@@ -303,7 +303,7 @@ public sealed class ProcessingPipeline
                     }
 
                     Interlocked.Increment(ref counters.Duplicates);
-                    TryDelete(tempPath);
+                    TryDelete(tempPath, logger);
 
                     if (isAlbumCopy)
                         MaterializeAlbumEntry(options, linker, albumManifest, media.Folder, media.FileName, canonical);
@@ -344,7 +344,7 @@ public sealed class ProcessingPipeline
         {
             // Never leave an orphaned .part behind (the happy paths move/delete it,
             // but an exception mid-flight would otherwise litter the output tree).
-            if (LongPath.Exists(tempPath)) TryDelete(tempPath);
+            if (LongPath.Exists(tempPath)) TryDelete(tempPath, logger);
         }
     }
 
@@ -491,9 +491,17 @@ public sealed class ProcessingPipeline
     private static string FormatOffset(TimeSpan offset) =>
         (offset < TimeSpan.Zero ? "-" : "+") + offset.ToString(@"hh\:mm", System.Globalization.CultureInfo.InvariantCulture);
 
-    private static void TryDelete(string path)
+    private static void TryDelete(string path, ILogger logger)
     {
-        try { File.Delete(LongPath.Extended(path)); } catch { /* best effort */ }
+        try
+        {
+            File.Delete(LongPath.Extended(path));
+        }
+        catch (Exception ex)
+        {
+            // Best-effort cleanup of a temp .part file; the media itself is safe.
+            logger.LogWarning(ex, "Could not delete temp file {Path}", path);
+        }
     }
 
     private static readonly char[] PathSeparators = ['/', '\\'];
