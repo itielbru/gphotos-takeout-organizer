@@ -40,28 +40,30 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 [![Download latest release](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?label=Download%20latest&style=for-the-badge&logo=windows&color=0D7377)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest)
 
-**Windows 10 / 11 · no installer**
+**Windows 10 / 11**
 
-| | Desktop app (GUI wizard) | Command line (CLI) |
-|:--|:--|:--|
-| Download | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
-| File to grab | `GPhotosTakeout-App-<version>-win-x64.zip` | `gptakeout-<version>-win-x64.exe` |
+| | 🏆 Installer (recommended) | Portable app (zip) | Command line (CLI) |
+|:--|:--|:--|:--|
+| Download | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
+| File to grab | `GPhotosTakeout-Setup-<version>-win-x64.exe` | `GPhotosTakeout-App-<version>-win-x64.zip` | `gptakeout-<version>-win-x64.exe` |
 
 </div>
 
-Both files are attached to the same [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) page — pick the one you need. The CLI is a single self-contained file (no zip). The App ships as a zip (a WinUI 3 limitation — see below) — extract it, the folder is otherwise self-contained.
+All files are attached to the same [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) page — pick the one you need.
 
-- **App** (graphical wizard): extract `GPhotosTakeout-App-…-win-x64.zip`, then run `GPhotosTakeout.App.exe` inside the extracted folder. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download). Everything else works without it. Then: add your Takeout ZIPs → pick options → run.
-- **CLI** (scripting / automation): run `gptakeout-…-win-x64.exe` from a terminal — see [Command line](#command-line-headless) below.
+- **Installer** (easiest): run `GPhotosTakeout-Setup-…-win-x64.exe` and click through. Installs per-user (no admin rights needed), adds a Start Menu shortcut, includes the CLI, and registers an uninstaller. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download). Everything else works without it. Then: add your Takeout ZIPs → pick options → run.
+- **Portable app** (no install): extract `GPhotosTakeout-App-…-win-x64.zip`, then run `GPhotosTakeout.App.exe` inside the extracted folder. Same app as the installer, no shortcuts or uninstaller.
+- **CLI** (scripting / automation): run `gptakeout-…-win-x64.exe` from a terminal — see [Command line](#command-line-headless) below. A single self-contained file, no zip.
 
 > **SmartScreen note:** the executables are not code-signed, so on first run Windows
 > SmartScreen may warn you. Click **More info → Run anyway** to continue. This is expected
 > for unsigned open-source apps.
 >
-> **Why the App is a zip and not a single .exe:** WinUI 3's `PublishSingleFile` mode for
+> **Why the portable App is a zip and not a single .exe:** WinUI 3's `PublishSingleFile` mode for
 > unpackaged apps crashes on startup ([microsoft/WindowsAppSDK#2597](https://github.com/microsoft/WindowsAppSDK/issues/2597))
 > — a known, still-open upstream bug, not something we can fix in this repo. The CLI has no
-> XAML/WindowsAppSDK dependency, so single-file publishing works fine for it.
+> XAML/WindowsAppSDK dependency, so single-file publishing works fine for it. The installer
+> sidesteps the issue entirely by installing the app folder for you.
 
 ### Command line (headless)
 
