@@ -6,7 +6,7 @@
     <!-- Single source of truth for the product version. Consumed by all assemblies
          and by the release workflow (the v* tag is expected to match). The MSIX
          workflow rewrites Package.appxmanifest's 4-part Version from this value. -->
-    <Version>1.2.1</Version>
+    <Version>1.2.2</Version>
 
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

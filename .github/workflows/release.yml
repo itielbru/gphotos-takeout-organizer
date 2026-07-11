@@ -1,7 +1,8 @@
 name: Release
 
-# Tag-driven portable release. Push a tag like v1.0.0 to build for win-x64 and
-# attach three artifacts to a draft GitHub Release:
+# Manually-dispatched portable release (Actions tab → Release → Run workflow,
+# supply the version). Builds for win-x64 and attaches three artifacts to a
+# draft GitHub Release:
 #   - a one-click installer (Inno Setup) bundling the App + CLI: per-user
 #     install, Start Menu shortcut, uninstaller — the recommended download
 #   - the CLI as a single self-contained .exe (no XAML/WindowsAppSDK dependency,
@@ -16,14 +17,11 @@ name: Release
 # %LocalAppData%\GPhotosTakeout\Tools), and the CLI reuses that install or takes
 # an explicit --exiftool path.
 #
-# Can also be run manually (Actions tab → Run workflow) for testing the
-# pipeline without pushing a tag — pick the branch/commit to build and supply
-# a version number; the release step creates the vX.Y.Z tag if it doesn't
-# already exist.
+# The release step creates the vX.Y.Z tag if it doesn't already exist.
+# Deliberately NOT triggered on tag push: publishing the draft release creates
+# the tag, and a tag trigger would re-run this whole workflow a second time
+# against the already-published release.
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -46,11 +44,7 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            $v = "${{ inputs.version }}" -replace '^v',''
-          } else {
-            $v = "${{ github.ref_name }}" -replace '^v',''
-          }
+          $v = "${{ inputs.version }}" -replace '^v',''
           "version=$v" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Publish App (self-contained folder, win-x64)
@@ -105,11 +99,8 @@ jobs:
         id: tag
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "name=v${{ inputs.version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          fi
+          v="${{ inputs.version }}"
+          echo "name=v${v#v}" >> "$GITHUB_OUTPUT"
 
       - name: Download all artifacts
         uses: actions/download-artifact@v8
