@@ -23,6 +23,12 @@ All notable changes to this project are documented here. The format is based on
   full rebuild and re-ran the release step against the already-published release).
   Releases are dispatched manually from the Actions tab.
 
+### Changed
+- The installer filename is now version-stable (`GPhotosTakeout-Setup-win-x64.exe`,
+  version in the EXE metadata and release tag) so the README's download button can
+  link directly to `releases/latest/download/…` and always fetch the newest release.
+  Both READMEs now lead with that one-click direct-download button.
+
 ## [1.2.1] - 2026-07-11
 
 ### Added

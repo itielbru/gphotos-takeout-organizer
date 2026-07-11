@@ -38,7 +38,10 @@ DisableProgramGroupPage=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\dist
-OutputBaseFilename=GPhotosTakeout-Setup-{#AppVersion}-win-x64
+; Version-stable filename so the README's direct-download link
+; (releases/latest/download/GPhotosTakeout-Setup-win-x64.exe) always resolves
+; to the newest release. The version lives in the tag and in the EXE metadata.
+OutputBaseFilename=GPhotosTakeout-Setup-win-x64
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
