@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-11
+
+### Added
+- One-click Windows installer (`GPhotosTakeout-Setup-<version>-win-x64.exe`), built
+  with Inno Setup by the release pipeline. Installs the App and the CLI per-user
+  (no admin rights needed), creates a Start Menu shortcut and an optional desktop
+  icon, and registers a standard uninstaller. The portable zip and the standalone
+  CLI exe are still published alongside it for users who prefer no install.
+
 ## [1.2.0] - 2026-07-10
 
 ### Added
@@ -89,7 +98,8 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.1
 [1.2.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.0
 [1.1.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.1.0
 [1.0.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.0.0

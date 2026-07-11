@@ -1,15 +1,17 @@
 name: Release
 
 # Tag-driven portable release. Push a tag like v1.0.0 to build for win-x64 and
-# attach two artifacts to a draft GitHub Release:
+# attach three artifacts to a draft GitHub Release:
+#   - a one-click installer (Inno Setup) bundling the App + CLI: per-user
+#     install, Start Menu shortcut, uninstaller — the recommended download
 #   - the CLI as a single self-contained .exe (no XAML/WindowsAppSDK dependency,
 #     so .NET's PublishSingleFile works cleanly for it)
-#   - the App as a self-contained folder, zipped. WinUI 3's unpackaged
-#     PublishSingleFile mode is NOT used here: combining it with
-#     WindowsAppSDKSelfContained crashes on startup for every user with
-#     STATUS_STOWED_EXCEPTION in Microsoft.UI.Xaml.dll (resources.pri isn't
-#     reliably available to the self-extracted temp copy) — a known upstream
-#     issue, see microsoft/WindowsAppSDK#2597, #2978, #4603.
+#   - the App as a self-contained folder, zipped (portable alternative to the
+#     installer). WinUI 3's unpackaged PublishSingleFile mode is NOT used here:
+#     combining it with WindowsAppSDKSelfContained crashes on startup for every
+#     user with STATUS_STOWED_EXCEPTION in Microsoft.UI.Xaml.dll (resources.pri
+#     isn't reliably available to the self-extracted temp copy) — a known
+#     upstream issue, see microsoft/WindowsAppSDK#2597, #2978, #4603.
 # ExifTool is not bundled — the App installs it on first run with one click (into
 # %LocalAppData%\GPhotosTakeout\Tools), and the CLI reuses that install or takes
 # an explicit --exiftool path.
@@ -73,6 +75,15 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Compress-Archive -Path publish/app/* -DestinationPath "dist/GPhotosTakeout-App-$v-win-x64.zip" -Force
           Copy-Item "publish/cli/gptakeout.exe" "dist/gptakeout-$v-win-x64.exe" -Force
+
+      # Inno Setup 6 is preinstalled on windows-latest runners. Packages
+      # publish/app + publish/cli into dist/GPhotosTakeout-Setup-<v>-win-x64.exe.
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DAppVersion=$v installer\setup.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
