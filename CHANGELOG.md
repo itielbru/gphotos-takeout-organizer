@@ -6,6 +6,21 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-07-12
+
+### Fixed
+- **Metadata is now written to files with Hebrew (or any non-ASCII) names.** The
+  ExifTool process reads its per-file commands from stdin, whose encoding defaulted
+  to the console code page — and the GUI App has no console, so non-ASCII filenames
+  were mangled before reaching ExifTool, which rejected every such file with
+  `Invalid filename encoding` and silently skipped the write. Stdin is now
+  explicitly UTF-8 (matching the `-charset filename=utf8` argument the app already
+  sent). Reproduced and verified on a real Windows 11 machine under a legacy OEM
+  code page: pre-fix the write fails, post-fix `DateTimeOriginal` lands in a
+  Hebrew-named file. Note: outputs produced by earlier versions have correct
+  organization but missing embedded metadata for such files — re-run into a fresh
+  output folder after upgrading.
+
 ## [1.3.0] - 2026-07-12
 
 ### Added
@@ -143,7 +158,8 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.1
 [1.3.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.0
 [1.2.2]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.2
 [1.2.1]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.1
