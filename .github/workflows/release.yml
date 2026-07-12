@@ -62,6 +62,46 @@ jobs:
           -p:DebugType=embedded
           -o publish/cli
 
+      # Bundle the pinned ExifTool build into the App's Tools folder so metadata
+      # writing works out of the box — no separate first-run download. The version
+      # and SHA-256 are parsed from ExifToolInstaller.cs (the single source of
+      # truth; the in-app installer remains for source builds and updates). Both
+      # the App and the CLI already probe <exe dir>\Tools for exiftool.exe.
+      - name: Bundle ExifTool
+        shell: pwsh
+        run: |
+          $src = Get-Content src/GPhotosTakeout.App/Services/ExifToolInstaller.cs -Raw
+          $ver = [regex]::Match($src, 'Version\s*=\s*"([^"]+)"').Groups[1].Value
+          $sha = [regex]::Match($src, 'Sha256\s*=\s*"([^"]+)"').Groups[1].Value
+          if (-not $ver -or -not $sha) { throw "Could not parse pinned ExifTool version/sha from ExifToolInstaller.cs" }
+          $zip = "exiftool.zip"
+          $urls = @(
+            "https://master.dl.sourceforge.net/project/exiftool/exiftool-${ver}_64.zip?viasf=1",
+            "https://exiftool.org/exiftool-${ver}_64.zip"
+          )
+          $ok = $false
+          foreach ($u in $urls) {
+            try { Invoke-WebRequest $u -OutFile $zip; $ok = $true; break }
+            catch { Write-Warning "download failed: $u ($($_.Exception.Message))" }
+          }
+          if (-not $ok) { throw "Could not download ExifTool $ver from any mirror" }
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash
+          if ($hash -ne $sha) { throw "ExifTool checksum mismatch: expected $sha got $hash" }
+          Expand-Archive $zip -DestinationPath exiftool-x
+          $root = Get-ChildItem exiftool-x -Directory | Select-Object -First 1
+          if (-not $root) { $root = Get-Item exiftool-x }
+          $tools = "publish/app/Tools"
+          New-Item -ItemType Directory -Force $tools | Out-Null
+          $exe = Get-ChildItem $root.FullName -Filter "exiftool*.exe" | Select-Object -First 1
+          if (-not $exe) { throw "exiftool executable not found in archive" }
+          Copy-Item $exe.FullName "$tools/exiftool.exe"
+          if (Test-Path "$($root.FullName)/exiftool_files") {
+            Copy-Item "$($root.FullName)/exiftool_files" "$tools/exiftool_files" -Recurse
+          }
+          $readme = Get-ChildItem $root.FullName -Filter "README*" | Select-Object -First 1
+          if ($readme) { Copy-Item $readme.FullName "$tools/exiftool-LICENSE.txt" }
+          & "$tools/exiftool.exe" -ver
+
       - name: Stage release artifacts
         shell: pwsh
         run: |

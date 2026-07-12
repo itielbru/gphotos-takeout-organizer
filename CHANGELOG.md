@@ -6,6 +6,28 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-12
+
+### Added
+- **ExifTool now ships inside the installer and the portable zip** — metadata
+  writing works out of the box, with no separate first-run download step. The
+  release pipeline downloads the pinned build (version + SHA-256 taken from
+  `ExifToolInstaller.cs`, still the single source of truth), verifies the
+  checksum, and stages it in the App's `Tools\` folder, which the App and the
+  CLI already probe. The in-app one-click installer remains for source builds
+  and for updating ExifTool later.
+- The run report now counts skipped non-media files (`SkippedNonMedia`), and the
+  run log records the selected input paths — previously a run's log did not say
+  what input it processed, which made misconfigured runs hard to diagnose.
+
+### Fixed
+- The pipeline no longer treats every input file as a photo. Only known
+  photo/video extensions (including camera raw and motion-photo companions) are
+  organized and sent to ExifTool; documents, executables, and other stray files
+  are skipped and counted. Previously, pointing the app at a folder containing
+  arbitrary files organized DLLs into the photo library by their file dates and
+  flooded the run with hundreds of ExifTool "writing not supported" errors.
+
 ## [1.2.2] - 2026-07-11
 
 ### Fixed
@@ -121,7 +143,8 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.0
 [1.2.2]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.2
 [1.2.1]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.1
 [1.2.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.0
