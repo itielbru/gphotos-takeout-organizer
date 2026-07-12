@@ -6,6 +6,29 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-07-11
+
+### Fixed
+- **The shipped App now actually launches.** Every released App build (portable zip
+  since v1.1.0 and the v1.2.1 installer) crashed immediately on startup with
+  `0xC000027B` (STATUS_STOWED_EXCEPTION) in `Microsoft.UI.Xaml.dll`, because
+  `EnableMsixTooling=false` on unpackaged builds prevented `dotnet publish` from
+  generating `resources.pri` (the compiled XAML). Dev builds were unaffected, which
+  is why the bug shipped repeatedly. The earlier diagnosis blaming WinUI 3's
+  single-file mode (v1.1.1 notes) was incomplete — the missing PRI was the real
+  cause all along. Verified on a real Windows 11 machine: pre-fix publish crashes,
+  post-fix publish launches.
+- The Release workflow no longer runs twice per release: the `push: tags` trigger
+  is removed (publishing the draft release creates the tag, which re-triggered a
+  full rebuild and re-ran the release step against the already-published release).
+  Releases are dispatched manually from the Actions tab.
+
+### Changed
+- The installer filename is now version-stable (`GPhotosTakeout-Setup-win-x64.exe`,
+  version in the EXE metadata and release tag) so the README's download button can
+  link directly to `releases/latest/download/…` and always fetch the newest release.
+  Both READMEs now lead with that one-click direct-download button.
+
 ## [1.2.1] - 2026-07-11
 
 ### Added
@@ -98,7 +121,8 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.2
 [1.2.1]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.1
 [1.2.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.0
 [1.1.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.1.0

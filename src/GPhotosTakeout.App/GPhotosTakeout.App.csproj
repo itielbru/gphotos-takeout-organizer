@@ -22,8 +22,14 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <WindowsPackageType Condition="'$(Packaging)' == 'true'">MSIX</WindowsPackageType>
     <WindowsPackageType Condition="'$(Packaging)' != 'true'">None</WindowsPackageType>
-    <EnableMsixTooling Condition="'$(Packaging)' == 'true'">true</EnableMsixTooling>
-    <EnableMsixTooling Condition="'$(Packaging)' != 'true'">false</EnableMsixTooling>
+    <!-- Must stay true even for unpackaged builds: these targets generate and copy
+         resources.pri (compiled XAML/XBF) into the PUBLISH output. When this was
+         false, dotnet publish emitted no PRI at all and every shipped build (zip and
+         installer alike) crashed on launch with 0xC000027B (STATUS_STOWED_EXCEPTION)
+         in Microsoft.UI.Xaml.dll — dev/F5 kept working because the regular build
+         drops loose .pri/.xbf into bin. With WindowsPackageType=None this does NOT
+         produce an MSIX; packaging is still gated by GenerateAppxPackageOnBuild. -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <GenerateAppxPackageOnBuild Condition="'$(Packaging)' == 'true'">true</GenerateAppxPackageOnBuild>
     <AppxPackageSigningEnabled Condition="'$(Packaging)' == 'true'">false</AppxPackageSigningEnabled>
     <AppxBundle Condition="'$(Packaging)' == 'true'">Never</AppxBundle>

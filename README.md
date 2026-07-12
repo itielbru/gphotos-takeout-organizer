@@ -38,22 +38,20 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 <div align="center">
 
-[![Download latest release](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?label=Download%20latest&style=for-the-badge&logo=windows&color=0D7377)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest)
+[![Download installer](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F%20Download%20for%20Windows-Setup%20EXE-0D7377?style=for-the-badge&logo=windows)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest/download/GPhotosTakeout-Setup-win-x64.exe)
 
-**Windows 10 / 11**
-
-| | 🏆 Installer (recommended) | Portable app (zip) | Command line (CLI) |
-|:--|:--|:--|:--|
-| Download | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) | [⬇ latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) |
-| File to grab | `GPhotosTakeout-Setup-<version>-win-x64.exe` | `GPhotosTakeout-App-<version>-win-x64.zip` | `gptakeout-<version>-win-x64.exe` |
+**Windows 10 / 11 · one click · no admin rights** · [![Latest version](https://img.shields.io/github/v/release/itielbru/gphotos-takeout-organizer?label=latest&color=0D7377)](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest)
 
 </div>
 
-All files are attached to the same [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) page — pick the one you need.
+The button above downloads the installer directly. Run it, click through, done — it installs per-user (no admin rights needed), adds a Start Menu shortcut, includes the CLI, and registers a standard uninstaller. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download); everything else works without it. Then: add your Takeout ZIPs → pick options → run.
 
-- **Installer** (easiest): run `GPhotosTakeout-Setup-…-win-x64.exe` and click through. Installs per-user (no admin rights needed), adds a Start Menu shortcut, includes the CLI, and registers an uninstaller. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download). Everything else works without it. Then: add your Takeout ZIPs → pick options → run.
-- **Portable app** (no install): extract `GPhotosTakeout-App-…-win-x64.zip`, then run `GPhotosTakeout.App.exe` inside the extracted folder. Same app as the installer, no shortcuts or uninstaller.
-- **CLI** (scripting / automation): run `gptakeout-…-win-x64.exe` from a terminal — see [Command line](#command-line-headless) below. A single self-contained file, no zip.
+Prefer not to install anything? Both alternatives are on the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) page:
+
+| Alternative | File to grab | Notes |
+|:--|:--|:--|
+| Portable app (zip) | `GPhotosTakeout-App-<version>-win-x64.zip` | Extract, run `GPhotosTakeout.App.exe` inside. Same app, no shortcuts or uninstaller. |
+| Command line (CLI) | `gptakeout-<version>-win-x64.exe` | Single self-contained file — see [Command line](#command-line-headless) below. |
 
 > **SmartScreen note:** the executables are not code-signed, so on first run Windows
 > SmartScreen may warn you. Click **More info → Run anyway** to continue. This is expected
