@@ -44,7 +44,7 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 
 </div>
 
-The button above downloads the installer directly. Run it, click through, done — it installs per-user (no admin rights needed), adds a Start Menu shortcut, includes the CLI, and registers a standard uninstaller. On first launch, click **Install ExifTool** to enable metadata writing (a one-time ~10 MB download); everything else works without it. Then: add your Takeout ZIPs → pick options → run.
+The button above downloads the installer directly. Run it, click through, done — it installs per-user (no admin rights needed), adds a Start Menu shortcut, includes the CLI **and a bundled ExifTool**, and registers a standard uninstaller. Everything works out of the box: add your Takeout ZIPs → pick options → run.
 
 Prefer not to install anything? Both alternatives are on the [latest release](https://github.com/itielbru/gphotos-takeout-organizer/releases/latest) page:
 
@@ -94,12 +94,14 @@ Key flags: `--structure yearmonth|albums|flat`, `--albums`, `--duplicates`,
 
 ## ExifTool
 
-The app installs a pinned [ExifTool](https://exiftool.org) build on first run with one click
-(into `%LocalAppData%\GPhotosTakeout\Tools`), so the download stays small.
-The CLI reuses that install automatically, or you can pass `--exiftool <path>`. When building
-from source, download `exiftool.exe` and place it (with its `exiftool_files/` folder) under
-`Tools/` next to the executable. Without ExifTool the app still organizes and dates files,
-but won't write metadata into them.
+Releases (installer and portable zip) bundle a pinned, checksum-verified
+[ExifTool](https://exiftool.org) build in the `Tools\` folder next to the app, so metadata
+writing works with no extra setup; the CLI finds it there too, or takes an explicit
+`--exiftool <path>`. The in-app one-click installer (into `%LocalAppData%\GPhotosTakeout\Tools`)
+remains for source builds and for updating ExifTool later. When building from source you can
+also just place `exiftool.exe` (with its `exiftool_files/` folder) under `Tools/` next to the
+executable. Without ExifTool the app still organizes and dates files, but won't write metadata
+into them.
 
 ## Build from source
 

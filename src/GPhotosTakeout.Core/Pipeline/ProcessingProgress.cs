@@ -40,6 +40,8 @@ public sealed record FileOutcome
 public sealed record ProcessingReport
 {
     public int TotalMedia { get; init; }
+    /// <summary>Non-sidecar input files skipped because they are not a known photo/video type.</summary>
+    public int SkippedNonMedia { get; init; }
     public int Matched { get; init; }
     public int Unmatched { get; init; }
     public int Duplicates { get; init; }

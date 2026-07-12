@@ -37,8 +37,9 @@ public sealed class ProcessingPipeline
         CancellationToken ct = default)
     {
         _logger.LogInformation(
-            "Run starting: {Archives} archive(s), output={Output}, structure={Structure}, dryRun={DryRun}, metadata={Metadata}",
-            options.InputZipPaths.Count, options.OutputDirectory, options.OutputStructure, options.DryRun,
+            "Run starting: {Archives} archive(s), inputs=[{Inputs}], output={Output}, structure={Structure}, dryRun={DryRun}, metadata={Metadata}",
+            options.InputZipPaths.Count, string.Join("; ", options.InputZipPaths),
+            options.OutputDirectory, options.OutputStructure, options.DryRun,
             _exifToolPath is not null && options.WriteMetadata && !options.DryRun);
 
         using var reader = new TakeoutArchiveReader();
@@ -48,8 +49,12 @@ public sealed class ProcessingPipeline
 
         progress?.Report(new ProcessingProgress { Phase = "Matching", Total = entries.Count });
         var matches = new SidecarMatcher().Match(entries);
-        var media = matches.Where(m => !m.Media.IsSidecar).ToList();
-        _logger.LogInformation("Matched: {Media} media files", media.Count);
+        var nonSidecar = matches.Where(m => !m.Media.IsSidecar).ToList();
+        var media = nonSidecar.Where(m => MediaTypes.IsMedia(m.Media.FileName)).ToList();
+        var skippedNonMedia = nonSidecar.Count - media.Count;
+        _logger.LogInformation(
+            "Matched: {Media} media files ({Skipped} non-media files skipped)",
+            media.Count, skippedNonMedia);
 
         using var journal = ResumeJournal.Open(options.OutputDirectory);
         var tz = new TimezoneResolver(options.FallbackTimeZone);
@@ -173,6 +178,7 @@ public sealed class ProcessingPipeline
         return new ProcessingReport
         {
             TotalMedia = media.Count,
+            SkippedNonMedia = skippedNonMedia,
             Matched = counters.Matched,
             Unmatched = counters.Unmatched,
             Duplicates = counters.Duplicates,

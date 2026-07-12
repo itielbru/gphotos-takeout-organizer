@@ -65,6 +65,44 @@ public class PipelineIntegrationTests : IDisposable
     }
 
     [Fact]
+    public async Task Run_NonMediaFiles_AreSkippedNotOrganized()
+    {
+        // Regression: a run whose input contained arbitrary non-media files (DLLs,
+        // Perl modules from an ExifTool install, files with no extension) used to
+        // organize them into the photo library and feed them to ExifTool. They must
+        // be skipped entirely — not extracted, not counted as media.
+        var zipPath = Path.Combine(_dir, "takeout-001.zip");
+        const long epoch = 1692108336; // 2023-08-15 UTC
+
+        using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            AddBinary(zip, "Takeout/Google Photos/Photos from 2023/IMG_1234.jpg", new byte[] { 1, 2, 3 });
+            AddText(zip, "Takeout/Google Photos/Photos from 2023/IMG_1234.jpg.supplemental-metadata.json", Sidecar(epoch));
+            AddBinary(zip, "Takeout/Google Photos/Photos from 2023/Microsoft.ui.xaml.dll", new byte[] { 4 });
+            AddBinary(zip, "Takeout/Google Photos/Photos from 2023/Exif.pm", new byte[] { 5 });
+            AddBinary(zip, "Takeout/Google Photos/Photos from 2023/README", new byte[] { 6 });
+        }
+
+        var output = Path.Combine(_dir, "out-nonmedia");
+        var report = await new ProcessingPipeline(null).RunAsync(new ProcessingOptions
+        {
+            InputZipPaths = new[] { zipPath },
+            OutputDirectory = output,
+            OutputStructure = OutputStructure.YearMonth,
+            WriteMetadata = false,
+            CpuParallelism = 1,
+        });
+
+        Assert.Equal(1, report.TotalMedia);
+        Assert.Equal(3, report.SkippedNonMedia);
+        Assert.Equal(0, report.Errors);
+        Assert.True(File.Exists(Path.Combine(output, "ALL_PHOTOS", "2023", "2023-08", "IMG_1234.jpg")));
+        Assert.Empty(Directory.EnumerateFiles(output, "*.dll", SearchOption.AllDirectories));
+        Assert.Empty(Directory.EnumerateFiles(output, "*.pm", SearchOption.AllDirectories));
+        Assert.Empty(Directory.EnumerateFiles(output, "README", SearchOption.AllDirectories));
+    }
+
+    [Fact]
     public async Task Run_Resume_SkipsAlreadyDoneFiles()
     {
         var zipPath = Path.Combine(_dir, "takeout-001.zip");
