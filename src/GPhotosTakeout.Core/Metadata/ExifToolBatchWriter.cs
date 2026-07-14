@@ -56,6 +56,12 @@ public sealed class ExifToolBatchWriter : IAsyncDisposable
             CreateNoWindow = true,
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
+            // Must be explicit UTF-8 (no BOM): the default stdin encoding follows the
+            // console code page — and a GUI app has no console, so it falls back to
+            // the ANSI/OEM page, mangling non-ASCII (Hebrew) filenames into bytes that
+            // ExifTool rejects with "Invalid filename encoding" and skips the write.
+            // Must match the "-charset filename=utf8" argument sent per command.
+            StandardInputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
         };
         // -stay_open keeps the process alive; -@ - reads arg-files from stdin.
         psi.ArgumentList.Add("-stay_open");
