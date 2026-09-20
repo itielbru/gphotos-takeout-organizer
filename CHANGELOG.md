@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-09-20
+
 ### Fixed
 - **Albums whose name ends with a dot or space (e.g. `Фото 2016 г.`) no longer
   produce an inaccessible output folder on Windows** (#26). Windows silently strips
@@ -166,7 +168,8 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.2
 [1.3.1]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.1
 [1.3.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.0
 [1.2.2]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.2.2
