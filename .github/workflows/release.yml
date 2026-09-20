@@ -81,7 +81,9 @@ jobs:
           )
           $ok = $false
           foreach ($u in $urls) {
-            try { Invoke-WebRequest $u -OutFile $zip; $ok = $true; break }
+            # SourceForge serves an HTML download page to browser-like UAs (pwsh sends
+            # "Mozilla/5.0 ... PowerShell/x"); a non-browser UA gets the file itself.
+            try { Invoke-WebRequest $u -OutFile $zip -UserAgent "curl/8"; $ok = $true; break }
             catch { Write-Warning "download failed: $u ($($_.Exception.Message))" }
           }
           if (-not $ok) { throw "Could not download ExifTool $ver from any mirror" }
