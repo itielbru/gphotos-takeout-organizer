@@ -385,23 +385,26 @@ public sealed class ProcessingPipeline
         ProcessingOptions options, AlbumLinker linker, AlbumManifestCollector albumManifest,
         string folder, string fileName, string canonicalPath)
     {
-        var albumName = LastSegment(folder);
         switch (options.AlbumStrategy)
         {
             case AlbumStrategy.Shortcut:
-                linker.Link(canonicalPath, Path.Combine(options.OutputDirectory, "Albums", albumName, fileName));
+                linker.Link(canonicalPath, AlbumEntryPath(options, folder, fileName));
                 break;
             case AlbumStrategy.Duplicate:
-                linker.Copy(canonicalPath, Path.Combine(options.OutputDirectory, "Albums", albumName, fileName));
+                linker.Copy(canonicalPath, AlbumEntryPath(options, folder, fileName));
                 break;
             case AlbumStrategy.JsonManifest:
-                albumManifest.Record(albumName, fileName, canonicalPath);
+                // The manifest stores the display name, not a path, so it keeps the raw name.
+                albumManifest.Record(LastSegment(folder), fileName, canonicalPath);
                 break;
             case AlbumStrategy.Nothing:
             default:
                 break;
         }
     }
+
+    private static string AlbumEntryPath(ProcessingOptions options, string folder, string fileName) =>
+        Path.Combine(options.OutputDirectory, "Albums", OutputPathBuilder.SanitizeAlbum(folder), fileName);
 
     private static async Task<(string dest, bool metadataWritten)> PlaceAndTagAsync(
         string tempPath, string dest, TakeoutJson? json, DateTime? localDate, DateTime? utcDate,

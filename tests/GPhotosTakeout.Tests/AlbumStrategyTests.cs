@@ -191,6 +191,33 @@ public class AlbumStrategyTests : IDisposable
             "album entry must exist even when the album copy wins the dedup race");
     }
 
+    [Fact]
+    public async Task AlbumStrategyShortcut_AlbumNameWithTrailingDot_IsSanitized()
+    {
+        // Issue #26: "Фото 2016 г." created an inaccessible directory on Windows.
+        var content = new byte[] { 0x10, 0x20, 0x30, 0x40 };
+        var zip = MakeZip(
+            ("Takeout/Google Photos/Photos from 2023/IMG.jpg", content),
+            ("Takeout/Google Photos/Фото 2016 г./IMG.jpg", content));
+
+        var output = Path.Combine(_dir, "out-shortcut-dot");
+        var report = await new ProcessingPipeline(null).RunAsync(new ProcessingOptions
+        {
+            InputZipPaths = new[] { zip },
+            OutputDirectory = output,
+            OutputStructure = OutputStructure.YearMonth,
+            AlbumStrategy = AlbumStrategy.Shortcut,
+            DuplicateHandling = DuplicateHandling.KeepBest,
+            WriteMetadata = false,
+            CpuParallelism = 1,
+        });
+
+        Assert.Equal(0, report.Errors);
+        Assert.True(File.Exists(Path.Combine(output, "Albums", "Фото 2016 г", "IMG.jpg")));
+        Assert.Equal(new[] { "Фото 2016 г" },
+            Directory.GetDirectories(Path.Combine(output, "Albums")).Select(Path.GetFileName));
+    }
+
     // ── AlbumStrategy.Duplicate ───────────────────────────────────────────────
 
     [Fact]
