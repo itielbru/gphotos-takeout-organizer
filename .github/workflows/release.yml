@@ -76,7 +76,7 @@ jobs:
           if (-not $ver -or -not $sha) { throw "Could not parse pinned ExifTool version/sha from ExifToolInstaller.cs" }
           $zip = "exiftool.zip"
           $urls = @(
-            "https://master.dl.sourceforge.net/project/exiftool/exiftool-${ver}_64.zip?viasf=1",
+            "https://downloads.sourceforge.net/project/exiftool/exiftool-${ver}_64.zip",
             "https://exiftool.org/exiftool-${ver}_64.zip"
           )
           $ok = $false

@@ -26,7 +26,7 @@ public sealed class ExifToolInstaller
     // version-stable mirror first so a pinned older version still resolves.
     private static readonly string[] Mirrors =
     {
-        $"https://master.dl.sourceforge.net/project/exiftool/exiftool-{Version}_64.zip?viasf=1",
+        $"https://downloads.sourceforge.net/project/exiftool/exiftool-{Version}_64.zip",
         $"https://exiftool.org/exiftool-{Version}_64.zip",
     };
 
