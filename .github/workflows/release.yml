@@ -113,7 +113,8 @@ jobs:
           Copy-Item "publish/cli/gptakeout.exe" "dist/gptakeout-$v-win-x64.exe" -Force
 
       # Inno Setup 6 is preinstalled on windows-latest runners. Packages
-      # publish/app + publish/cli into dist/GPhotosTakeout-Setup-<v>-win-x64.exe.
+      # publish/app + publish/cli into dist/GPhotosTakeout-Setup-win-x64.exe (no
+      # version in the name on purpose: the README links releases/latest/download/...).
       - name: Build installer (Inno Setup)
         shell: pwsh
         run: |
