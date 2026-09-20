@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+- **Albums whose name ends with a dot or space (e.g. `Фото 2016 г.`) no longer
+  produce an inaccessible output folder on Windows** (#26). Windows silently strips
+  trailing dots/spaces when creating a directory, so the folder existed under a
+  different name than the one the app kept writing to and could not be opened.
+  Album directory names are now sanitized once, for both the `Albums` output
+  structure and the `Albums/` shortcut/duplicate folder.
+
 ## [1.3.1] - 2026-07-12
 
 ### Fixed

@@ -68,11 +68,17 @@ public sealed class OutputPathBuilder
         return name.StartsWith("Photos from ", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string SanitizeAlbum(string folder)
+    /// <summary>
+    /// Turns a Takeout album folder into a directory name that is safe on every OS.
+    /// Trailing dots/spaces are trimmed: Windows strips them on create, leaving a
+    /// directory whose name no longer matches and cannot be opened (issue #26).
+    /// </summary>
+    public static string SanitizeAlbum(string folder)
     {
         var name = LastSegment(folder);
         foreach (var c in Path.GetInvalidFileNameChars())
             name = name.Replace(c, '_');
+        name = name.TrimEnd('.', ' ');
         return string.IsNullOrWhiteSpace(name) ? AllPhotos : name;
     }
 

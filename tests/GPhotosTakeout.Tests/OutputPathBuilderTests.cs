@@ -102,6 +102,16 @@ public class OutputPathBuilderTests
         Assert.Equal(P(@"C:\out", "Photos from 2023", "IMG.jpg"), p);
     }
 
+    [Fact]
+    public void Albums_TrailingDotsAndSpacesTrimmed()
+    {
+        // Windows silently strips trailing dots/spaces on create, leaving an
+        // inaccessible directory (issue #26).
+        var builder = new OutputPathBuilder(OutputStructure.Albums);
+        var p = builder.BuildPath(@"C:\out", Media("Takeout/Google Photos/Фото 2016 г./IMG.jpg"), null);
+        Assert.Equal(P(@"C:\out", "Фото 2016 г", "IMG.jpg"), p);
+    }
+
     // ── Special folder edge cases ────────────────────────────────────────────
 
     [Fact]
