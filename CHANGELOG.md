@@ -15,6 +15,10 @@ All notable changes to this project are documented here. The format is based on
   different name than the one the app kept writing to and could not be opened.
   Album directory names are now sanitized once, for both the `Albums` output
   structure and the `Albums/` shortcut/duplicate folder.
+- **ExifTool download works again** (in-app installer and release bundling).
+  SourceForge's `master.dl` mirror now redirects to plain HTTP, which .NET refuses,
+  and exiftool.org no longer hosts the zip directly. The primary mirror is now
+  `downloads.sourceforge.net` (HTTPS end to end); the pinned SHA-256 is unchanged.
 
 ## [1.3.1] - 2026-07-12
 
