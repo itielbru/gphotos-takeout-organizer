@@ -34,6 +34,25 @@ files, so you end up with wrong dates and lost descriptions. This tool fixes tha
 - **Long-path safe**, multi-archive aware, resumable, with a dry-run preview.
 - **Bilingual UI** — Hebrew (RTL) and English (LTR), switchable live.
 
+## How it compares
+
+Other good tools exist; pick by what you need. Facts as of September 2026, from each project's README.
+
+| | **This tool** | [GooglePhotosTakeoutHelper](https://github.com/TheLastGimbus/GooglePhotosTakeoutHelper) | [immich-go](https://github.com/simulot/immich-go) | [google-photos-exif](https://github.com/mattwilson1024/google-photos-exif) |
+|:--|:--|:--|:--|:--|
+| Purpose | Fix a Takeout into a clean local library | Same | Upload a Takeout into an [Immich](https://immich.app) server | Fill missing `DateTimeOriginal` |
+| Platform | Windows (GUI wizard + CLI) | Windows / macOS / Linux (CLI) | Windows / macOS / Linux (CLI) | Any (Node CLI) |
+| Reads the ZIPs directly | Yes, multi-part too | No — unzip and merge folders first | Yes | No — unzipped folder |
+| Writes into the files | Date **+ timezone offset + GPS + description** (ExifTool) | Date only (GPS "missing in the Dart version"); suggests running ExifTool yourself afterwards | Not the goal — metadata goes to the server | `DateTimeOriginal` only |
+| Timezone-correct local time | From GPS, with fallback zone | No | Server-side | No |
+| Truncated `…supplemental-metad.json` names | Handled | Open issue [#353](https://github.com/TheLastGimbus/GooglePhotosTakeoutHelper/issues/353) | Handled | — |
+| Albums | shortcut / duplicate / JSON manifest / none | Same options | Created on the server | — |
+| Duplicates | Content-hash dedup | Yes | Server-side | — |
+| Resumable, dry-run | Yes / Yes | — / — | Yes / Yes | — / — |
+| Last release | see badge above | v3.4.3 (Sep 2023) | active | May 2024 |
+
+If you run Immich, use immich-go. If you are on macOS/Linux, GPTH is the closest equivalent. If you want the metadata *inside* the files on Windows, with a wizard, this is the one.
+
 ## Quick start
 
 <div align="center">

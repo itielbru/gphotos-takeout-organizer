@@ -32,6 +32,25 @@ Google Photos Takeout מייצא את הספרייה שלך כקבצי ZIP שב�
 - **בטוח לנתיבים ארוכים**, תומך במספר ארכיונים, ניתן לחידוש, עם תצוגה מקדימה של dry-run.
 - **ממשק דו-לשוני** — עברית (RTL) ואנגלית (LTR), ניתן להחלפה בזמן אמת.
 
+## איך זה משתווה
+
+יש כלים טובים אחרים; בחרו לפי הצורך. הנתונים נכונים לספטמבר 2026, מתוך ה-README של כל פרויקט.
+
+| | **הכלי הזה** | [GooglePhotosTakeoutHelper](https://github.com/TheLastGimbus/GooglePhotosTakeoutHelper) | [immich-go](https://github.com/simulot/immich-go) | [google-photos-exif](https://github.com/mattwilson1024/google-photos-exif) |
+|:--|:--|:--|:--|:--|
+| מטרה | לסדר Takeout לספרייה מקומית נקייה | אותו דבר | להעלות Takeout לשרת [Immich](https://immich.app) | להשלים `DateTimeOriginal` חסר |
+| פלטפורמה | Windows (אשף גרפי + CLI) | Windows / macOS / Linux (CLI) | Windows / macOS / Linux (CLI) | כל מערכת (Node CLI) |
+| קורא את ה-ZIP ישירות | כן, גם מרובי-חלקים | לא — לחלץ ולמזג תיקיות קודם | כן | לא — תיקייה מחולצת |
+| כותב לתוך הקבצים | תאריך **+ היסט אזור זמן + GPS + תיאור** (ExifTool) | תאריך בלבד (GPS "חסר בגרסת ה-Dart"); מציע להריץ ExifTool לבד אחר כך | לא המטרה — המטא-דאטה הולך לשרת | `DateTimeOriginal` בלבד |
+| שעה מקומית לפי אזור זמן | מ-GPS, עם אזור ברירת מחדל | לא | בצד השרת | לא |
+| שמות `…supplemental-metad.json` קטועים | מטופל | issue פתוח [#353](https://github.com/TheLastGimbus/GooglePhotosTakeoutHelper/issues/353) | מטופל | — |
+| אלבומים | קיצור דרך / עותק / מניפסט JSON / ללא | אותן אפשרויות | נוצרים בשרת | — |
+| כפילויות | לפי hash של התוכן | כן | בצד השרת | — |
+| המשך ריצה, dry-run | כן / כן | — / — | כן / כן | — / — |
+| גרסה אחרונה | ראו badge למעלה | v3.4.3 (ספטמבר 2023) | פעיל | מאי 2024 |
+
+אם יש לכם Immich — immich-go. אם אתם על macOS/Linux — GPTH הוא המקבילה הקרובה. אם אתם רוצים את המטא-דאטה *בתוך* הקבצים על Windows, עם אשף — זה הכלי.
+
 ## התקנה מהירה
 
 <div align="center">
