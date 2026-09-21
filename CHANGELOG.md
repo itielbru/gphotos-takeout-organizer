@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-09-21
+
 ### Fixed
 - **Album copies of de-duplicated photos could miss the embedded metadata.** The
   dedup owner published its final path before ExifTool had written to it, so an
@@ -180,7 +182,8 @@ All notable changes to this project are documented here. The format is based on
 - 87 tests covering matching, dates, dedup, pipeline, concurrency, validation, dry-run,
   ExifTool resilience, long-path, archives, timezone, and albums.
 
-[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/itielbru/gphotos-takeout-organizer/compare/v1.3.3...HEAD
+[1.3.3]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.3
 [1.3.2]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.2
 [1.3.1]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.1
 [1.3.0]: https://github.com/itielbru/gphotos-takeout-organizer/releases/tag/v1.3.0
