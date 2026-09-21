@@ -316,16 +316,27 @@ public sealed class ProcessingPipeline
                     return outcome with { IsDuplicate = true, DestinationPath = canonical };
                 }
 
-                // We own this content: place the canonical file and publish its path so
-                // waiting duplicates can link to it. Publish/fail must always happen.
+                // We own this content: place the canonical file, tag it, and only then
+                // publish its path. Duplicates copy or hardlink the canonical file, and
+                // ExifTool rewrites via temp+rename, so publishing before the tag hands
+                // them the untagged bytes (Duplicate strategy) or a detached hardlink
+                // (Shortcut fallback). Publish/fail must always happen, even if tagging
+                // throws — a waiting duplicate must never hang.
                 var published = false;
                 try
                 {
                     var finalDest = MoveUnique(tempPath, dest);
-                    dedup.PublishOwnerPath(extract.ContentHash, finalDest);
-                    published = true;
-                    var wrote = await TagAsync(finalDest, json, localDate, utcDate, offset, exifPool, counters, ct)
-                        .ConfigureAwait(false);
+                    bool wrote;
+                    try
+                    {
+                        wrote = await TagAsync(finalDest, json, localDate, utcDate, offset, exifPool, counters, ct)
+                            .ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        dedup.PublishOwnerPath(extract.ContentHash, finalDest);
+                        published = true;
+                    }
                     // An album copy that wins the dedup race still lands in ALL_PHOTOS
                     // (the path builder ignores the album folder), so its album entry
                     // must be materialized here too — not only on the duplicate path.
