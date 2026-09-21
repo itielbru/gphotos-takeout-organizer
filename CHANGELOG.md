@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+- **Album copies of de-duplicated photos could miss the embedded metadata.** The
+  dedup owner published its final path before ExifTool had written to it, so an
+  album entry created from a duplicate copied the untagged file (`duplicate`
+  strategy) or hardlinked it and was then detached by ExifTool's temp+rename write
+  (`shortcut` strategy when symlinks are unavailable). The path is now published
+  only after tagging. Found by the v1.3.2 smoke test; `ALL_PHOTOS` was never affected.
+
 ## [1.3.2] - 2026-09-20
 
 ### Fixed

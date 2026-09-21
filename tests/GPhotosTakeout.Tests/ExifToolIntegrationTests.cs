@@ -30,6 +30,13 @@ public class ExifToolIntegrationTests : IDisposable
 
     private static string? FindExifTool()
     {
+        // The App's in-app installer target (same place the App and CLI probe first).
+        var installed = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "GPhotosTakeout", "Tools", "exiftool.exe");
+        if (File.Exists(installed))
+            return installed;
+
         // Walk up from the test output to the repo root and look in src/.../Tools.
         var dir = AppContext.BaseDirectory;
         for (var i = 0; i < 8 && dir is not null; i++)
@@ -77,6 +84,52 @@ public class ExifToolIntegrationTests : IDisposable
             .Single();
         // ExifTool actually rewrote the file (it grows once EXIF/XMP is embedded).
         Assert.True(new FileInfo(outFile).Length > jpeg.Length);
+    }
+
+    [Fact]
+    public async Task AlbumDuplicate_CopiedAfterMetadataWritten()
+    {
+        // Regression: the dedup owner published its path before ExifTool wrote to it, so
+        // a waiting album duplicate (Duplicate strategy, or Shortcut falling back to a
+        // hardlink — ExifTool's -overwrite_original rewrites via temp+rename, which
+        // detaches a hardlink) copied the untagged file. Several identical album copies
+        // widen the race window so the pre-fix behaviour shows up reliably.
+        var exifTool = FindExifTool();
+        if (exifTool is null)
+            return;
+
+        var jpeg = Convert.FromBase64String(TinyJpegBase64);
+        var sidecar = Encoding.UTF8.GetBytes("{\"photoTakenTime\":{\"timestamp\":\"1625356800\"}}");
+        var zipPath = Path.Combine(_dir, "takeout-001.zip");
+        using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            Add(zip, "Takeout/Google Photos/Photos from 2021/IMG_0001.jpg", jpeg);
+            Add(zip, "Takeout/Google Photos/Photos from 2021/IMG_0001.jpg.json", sidecar);
+            for (var i = 0; i < 6; i++)
+            {
+                Add(zip, $"Takeout/Google Photos/Album {i}/IMG_0001.jpg", jpeg);
+                Add(zip, $"Takeout/Google Photos/Album {i}/IMG_0001.jpg.json", sidecar);
+            }
+        }
+
+        var output = Path.Combine(_dir, "out");
+        var report = await new ProcessingPipeline(exifTool).RunAsync(new ProcessingOptions
+        {
+            InputZipPaths = new[] { zipPath },
+            OutputDirectory = output,
+            AlbumStrategy = AlbumStrategy.Duplicate,
+            WriteMetadata = true,
+            CpuParallelism = 4,
+        });
+
+        Assert.Equal(0, report.Errors);
+        Assert.Equal(6, report.Duplicates);
+
+        var canonical = new FileInfo(Directory.EnumerateFiles(
+            Path.Combine(output, OutputPathBuilder.AllPhotos), "IMG_0001.jpg", SearchOption.AllDirectories).Single());
+        Assert.True(canonical.Length > jpeg.Length, "canonical must carry metadata");
+        foreach (var copy in Directory.EnumerateFiles(Path.Combine(output, "Albums"), "IMG_0001.jpg", SearchOption.AllDirectories))
+            Assert.Equal(canonical.Length, new FileInfo(copy).Length);
     }
 
     private static void Add(ZipArchive zip, string path, byte[] bytes)
