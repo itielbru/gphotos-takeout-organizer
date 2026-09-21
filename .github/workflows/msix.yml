@@ -1,6 +1,10 @@
 name: MSIX package (manual)
 
 # Opt-in only: the Store/MSIX path is kept alive but does not gate CI or releases.
+# Least-privilege default token; jobs that need more declare it themselves.
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
 
@@ -8,10 +12,10 @@ jobs:
   package-msix:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup .NET 9
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           dotnet-version: '9.0.x'
 
@@ -31,7 +35,7 @@ jobs:
         run: dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -c Release -p:Platform=x64 -p:Packaging=true
 
       - name: Upload MSIX artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: msix-x64
           path: src/GPhotosTakeout.App/AppPackages/**/*.msix
