@@ -13,9 +13,9 @@ name: Release
 #     user with STATUS_STOWED_EXCEPTION in Microsoft.UI.Xaml.dll (resources.pri
 #     isn't reliably available to the self-extracted temp copy) — a known
 #     upstream issue, see microsoft/WindowsAppSDK#2597, #2978, #4603.
-# ExifTool is not bundled — the App installs it on first run with one click (into
-# %LocalAppData%\GPhotosTakeout\Tools), and the CLI reuses that install or takes
-# an explicit --exiftool path.
+# The pinned ExifTool build is downloaded, checksum-verified and bundled into the
+# App's Tools\ folder (see "Bundle ExifTool"); the in-app installer remains for
+# source builds and updates.
 #
 # The release step creates the vX.Y.Z tag if it doesn't already exist.
 # Deliberately NOT triggered on tag push: publishing the draft release creates
@@ -141,6 +141,18 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # Since 2026-09-19 GitHub refuses GITHUB_TOKEN release/tag creation for a commit
+      # whose .github/workflows/ differs from the default branch tip (treated as
+      # "creating a workflow"), surfacing as a bare 403. Catch it with a clear message.
+      - name: Check main did not change workflows since dispatch
+        shell: bash
+        run: |
+          git fetch --quiet origin main
+          if ! git diff --quiet "${{ github.sha }}" origin/main -- .github/workflows; then
+            echo "::error::Workflow files on main changed after this run started; GitHub will refuse to create the release for ${{ github.sha }}. Re-run the Release workflow from the current main."
+            exit 1
+          fi
 
       - name: Resolve tag
         id: tag
