@@ -72,6 +72,7 @@ Google Photos Takeout מייצא את הספרייה שלך כקבצי ZIP שב�
 
 > **הערת SmartScreen:** הקבצים אינם חתומים דיגיטלית, ולכן בהרצה הראשונה Windows עשוי להציג
 > אזהרה. לחצו **More info → Run anyway** כדי להמשיך. זה נורמלי לאפליקציות קוד פתוח ללא חתימה.
+> חתימה דיגיטלית בחינם דרך [SignPath Foundation](https://signpath.org) בתהליך הקמה — ראו [מדיניות חתימת הקוד](SECURITY.md#code-signing-policy).
 >
 > **למה האפליקציה הניידת היא ZIP ולא EXE יחיד:** מצב `PublishSingleFile` של WinUI 3 לאפליקציות
 > unpackaged קורס בהרצה הראשונה אצל כל משתמש ([microsoft/WindowsAppSDK#2597](https://github.com/microsoft/WindowsAppSDK/issues/2597))
