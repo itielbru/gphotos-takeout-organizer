@@ -14,6 +14,12 @@ readme_index:
 relative_links:
   enabled: true
   collections: false
+# jekyll-seo-tag: og:image / twitter:image for every page (link previews).
+defaults:
+  - scope:
+      path: ""
+    values:
+      image: /docs/assets/social-preview.png
 exclude:
   - src/
   - tests/
