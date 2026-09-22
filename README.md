@@ -74,7 +74,8 @@ Prefer not to install anything? Both alternatives are on the [latest release](ht
 
 > **SmartScreen note:** the executables are not code-signed, so on first run Windows
 > SmartScreen may warn you. Click **More info → Run anyway** to continue. This is expected
-> for unsigned open-source apps.
+> for unsigned open-source apps. Free code signing via [SignPath Foundation](https://signpath.org)
+> is being set up — see the [code signing policy](SECURITY.md#code-signing-policy).
 >
 > **Why the portable App is a zip and not a single .exe:** WinUI 3's `PublishSingleFile` mode for
 > unpackaged apps crashes on startup ([microsoft/WindowsAppSDK#2597](https://github.com/microsoft/WindowsAppSDK/issues/2597))
