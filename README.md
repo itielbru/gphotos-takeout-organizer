@@ -138,6 +138,10 @@ design, concurrency model, and the matching/date/timezone strategy.
 
 ## Screenshots
 
+The whole flow, start to finish — add the ZIPs, keep the defaults, run:
+
+<p align="center"><img src="docs/assets/wizard.gif" alt="Wizard walkthrough: select ZIPs, options, run, summary" width="760"></p>
+
 | English (LTR) | עברית (RTL) |
 |:---:|:---:|
 | ![English wizard](docs/assets/wizard-en.png) | ![Hebrew wizard](docs/assets/wizard-he.png) |

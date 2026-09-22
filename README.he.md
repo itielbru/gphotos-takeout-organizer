@@ -153,6 +153,10 @@ dotnet build src/GPhotosTakeout.App/GPhotosTakeout.App.csproj -p:Platform=x64
 
 ## צילומי מסך
 
+כל התהליך מתחילתו ועד סופו — מוסיפים את ה-ZIP, משאירים את ברירות המחדל, מריצים:
+
+<p align="center"><img src="docs/assets/wizard.gif" alt="הדגמת האשף: בחירת ZIP, הגדרות, הרצה, סיכום" width="760"></p>
+
 | אנגלית (LTR) | עברית (RTL) |
 |:---:|:---:|
 | ![אשף אנגלית](docs/assets/wizard-en.png) | ![אשף עברית](docs/assets/wizard-he.png) |
