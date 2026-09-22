@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מארגן Google Photos Takeout — מחזירים את התאריכים לתמונות</title>
+<meta name="description" content="כלי חינמי לווינדוס שקורא את קבצי ה-ZIP של Google Takeout ישירות ומחזיר לכל תמונה את התאריך האמיתי, אזור הזמן, ה-GPS והתיאור. מסיר כפילויות, בונה אלבומים, מסדר לפי שנה/חודש.">
+<link rel="canonical" href="https://itielbru.github.io/gphotos-takeout-organizer/he/">
+<link rel="alternate" hreflang="en" href="https://itielbru.github.io/gphotos-takeout-organizer/">
+<link rel="alternate" hreflang="he" href="https://itielbru.github.io/gphotos-takeout-organizer/he/">
+<link rel="alternate" hreflang="x-default" href="https://itielbru.github.io/gphotos-takeout-organizer/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="מארגן Google Photos Takeout">
+<meta property="og:description" content="מחזירים את התאריכים, ה-GPS והתיאורים מ-Takeout לתוך התמונות. חינמי, קוד פתוח, Windows.">
+<meta property="og:image" content="https://itielbru.github.io/gphotos-takeout-organizer/docs/assets/social-preview.png">
+<meta property="og:url" content="https://itielbru.github.io/gphotos-takeout-organizer/he/">
+<meta property="og:locale" content="he_IL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0b0d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b0b0d'/%3E%3Crect x='5' y='7' width='22' height='18' fill='%23f6f3ee'/%3E%3Crect x='17' y='19' width='8' height='3' fill='%23ff8a1e'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../docs/assets/landing.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Google Photos Takeout Organizer","inLanguage":"he","operatingSystem":"Windows 10, Windows 11","applicationCategory":"MultimediaApplication","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"downloadUrl":"https://github.com/itielbru/gphotos-takeout-organizer/releases/latest/download/GPhotosTakeout-Setup-win-x64.exe","softwareVersion":"1.3.3","url":"https://itielbru.github.io/gphotos-takeout-organizer/he/","author":{"@type":"Person","name":"Itiel Bru","url":"https://github.com/itielbru"}}
+</script>
+</head>
+<body>
+<!-- DIRECTION CONTRACT: see /index.html (seed 8e443b31, "Date Burn-In"). This is the Hebrew mirror: same world, same composition, RTL. -->
+<div class="page">
+
+<header class="top">
+  <a class="brand" href="./">מארגן Google Photos Takeout</a>
+  <nav aria-label="ניווט">
+    <a href="#how">מה זה עושה</a>
+    <a href="#compare">השוואה</a>
+    <a href="https://github.com/itielbru/gphotos-takeout-organizer">GitHub</a>
+    <a class="lang" href="../" lang="en" hreflang="en">English</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero" aria-labelledby="h1">
+  <div>
+    <h1 id="h1">מחזירים את התאריכים <em>לתמונות</em> שלכם.</h1>
+    <p class="lede">Google Takeout נותן לכם קבצי ZIP שבהם התאריך, המיקום והתיאור האמיתיים של כל תמונה יושבים בקובץ <span dir="ltr">.json</span> לידה, לא בתוך התמונה. פותחים את התיקייה בכל מקום אחר, והכל מתוארך להיום. הכלי הזה קורא את ה-ZIP, כותב את האמת בחזרה לתוך כל קובץ, ומסדר את הכול.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/itielbru/gphotos-takeout-organizer/releases/latest/download/GPhotosTakeout-Setup-win-x64.exe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
+        הורדה ל-Windows
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/itielbru/gphotos-takeout-organizer/releases/latest">גרסה ניידת · CLI · checksums</a>
+    </div>
+    <p class="fineprint">חינמי, MIT, בלי טלמטריה. Windows 10/11, בלי הרשאות מנהל. <b>ה-installer עדיין לא חתום דיגיטלית</b>, אז SmartScreen ישאל פעם אחת: <kbd dir="ltr">More info → Run anyway</kbd>.</p>
+  </div>
+
+  <div class="print-wrap">
+    <div class="print">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="face">
+        <img src="../docs/assets/wizard.gif" width="880" height="610" alt="האשף: מוסיפים קבצי ZIP, משאירים ברירות מחדל, מריצים, ורואים סיכום — 4 הותאמו, כפילות אחת הוסרה, 3 מטא-דאטה נכתבו, 0 שגיאות.">
+        <div class="burn" data-date="'23 7 22" data-wrong="'26 9 22" data-label="חותמת תאריך: 22 ביולי 2023"></div>
+      </div>
+    </div>
+    <p class="burn-caption" aria-live="polite">
+      <span class="wrong">מה שגוגל נתן לכם: <strong>היום</strong>.</span>
+      <span class="real">מה שה-JSON ידע: <strong>22 ביולי 2023, 07:26</strong>, תל אביב.</span>
+    </p>
+  </div>
+</section>
+
+<div class="strip" role="group" aria-label="המטא-דאטה של תמונה אחת, פתור">
+  <div><span class="k">Takeout JSON</span><span class="v" dir="ltr">photoTakenTime 1690000000</span></div>
+  <div><span class="k">UTC</span><span class="v" dir="ltr">2023‑07‑22 04:26:40</span></div>
+  <div><span class="k">GPS 32.0853, 34.7818 ← Asia/Jerusalem</span><span class="v burn-text" dir="ltr">07:26:40 +03:00</span></div>
+  <div><span class="k">נכתב לתוך הקובץ</span><span class="v" dir="ltr">DateTimeOriginal · OffsetTimeOriginal · GPS · Description</span></div>
+</div>
+
+<section id="how" aria-labelledby="h2-how">
+  <div class="inner">
+    <h2 id="h2-how">מה זה עושה לייצוא Takeout</h2>
+    <p class="sub">כל שלב רץ על המחשב שלכם. שום דבר לא עולה לרשת; הפנייה היחידה החוצה היא ההתקנה של ExifTool בלחיצה, וגם היא מגיעה כבר בתוך ה-installer.</p>
+    <ol class="log">
+      <li><span class="n">01</span><h3>קורא את ה-ZIP כמו שהם</h3><p>ייצוא מרובה חלקים (<code dir="ltr">takeout-001.zip</code>, <code dir="ltr">-002</code>…) נסרק כיחידה אחת. בלי לחלץ 200 GB קודם, בלי למזג תיקיות ביד.</p></li>
+      <li><span class="n">02</span><h3>מתאים כל תמונה ל-JSON שלה</h3><p>כולל השמות הקטועים של גוגל (<code dir="ltr">…supplemental-metad.json</code>), גרסאות <code dir="ltr">-edited</code> ו-<code dir="ltr">(1)</code>, וזוגות Live/Motion Photo: לפי תחילית, לא לפי מזל.</p></li>
+      <li><span class="n">03</span><h3>כותב את המטא-דאטה לתוך הקובץ</h3><p>זמן הצילום עם היסט אזור הזמן הנכון (מ-GPS, עם אזור ברירת מחדל), קואורדינטות ותיאור נכנסים ל-EXIF/XMP דרך ExifTool. כל אפליקציית תמונות קוראת אותם אחר כך.</p></li>
+      <li><span class="n">04</span><h3>שומר עותק אחד מכל תמונה</h3><p>Takeout משכפל תמונה לכל תיקיית אלבום. זיהוי כפילויות לפי hash של התוכן שומר עותק אחד; האלבומים הופכים לקיצורי דרך, עותקים או מניפסט JSON, לבחירתכם.</p></li>
+      <li><span class="n">05</span><h3>מסדר לספרייה שאפשר לפתוח</h3><p><code dir="ltr">ALL_PHOTOS/2023/2023‑07/…</code> כברירת מחדל, או לפי אלבום, או שטוח. ארכיון, אשפה ותיקייה נעולה נשארים בנפרד. Dry-run מציג את התוכנית קודם; ריצה שנקטעה ממשיכה מאותה נקודה.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section aria-labelledby="h2-who">
+  <div class="inner">
+    <h2 id="h2-who">שתי דרכים פנימה</h2>
+    <p class="sub">האשף שואל שלוש שאלות. ה-CLI מקבל דגלים. אותו מנוע, אותו פלט.</p>
+    <div class="two">
+      <div>
+        <h3>רק רוצים את התמונות בחזרה</h3>
+        <p>מתקינים, גוררים את ה-ZIP פנימה, משאירים את ברירות המחדל, בוחרים תיקיית פלט, מריצים. הסיכום אומר מה הותאם, מה הוסר ככפילות ומה נכתב, ופותח את הלוג אם משהו השתבש. עברית ואנגלית, מתחלף בזמן אמת.</p>
+        <p><a href="https://github.com/itielbru/gphotos-takeout-organizer/blob/main/README.he.md#התקנה-מהירה">התחלה מהירה ←</a></p>
+      </div>
+      <div>
+        <h3>רוצים לתסרט את זה</h3>
+        <pre><code><span class="c"># same engine, no UI</span>
+gptakeout -i takeout-001.zip -i takeout-002.zip <span class="o">-o</span> D:\Photos
+  --structure yearmonth --albums shortcut --duplicates keepbest
+  --dry-run --report plan.json</code></pre>
+        <p style="margin-top:12px"><a href="https://github.com/itielbru/gphotos-takeout-organizer/blob/main/docs/cli-cookbook.md">ספר מתכונים ל-CLI ←</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="compare" aria-labelledby="h2-cmp">
+  <div class="inner">
+    <h2 id="h2-cmp">איך זה משתווה</h2>
+    <p class="sub">יש כלים טובים; בחרו לפי הצורך. אם יש לכם Immich — immich-go. על macOS או Linux — GPTH הוא המקבילה הקרובה. הנתונים מה-README של כל פרויקט, ספטמבר 2026.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col">הכלי הזה</th><th scope="col">GooglePhotosTakeoutHelper</th><th scope="col">immich-go</th><th scope="col">google-photos-exif</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">פלטפורמה</th><td class="us">Windows · אשף + CLI</td><td>Win / macOS / Linux · CLI</td><td>Win / macOS / Linux · CLI</td><td>Node CLI</td></tr>
+          <tr><th scope="row">קורא את ה-ZIP ישירות</th><td class="us">כן, גם מרובי-חלקים</td><td>לא — לחלץ ולמזג קודם</td><td>כן</td><td>לא</td></tr>
+          <tr><th scope="row">כותב לתוך הקבצים</th><td class="us">תאריך + היסט אזור זמן + GPS + תיאור</td><td>תאריך בלבד</td><td>לא המטרה (שרת)</td><td>DateTimeOriginal בלבד</td></tr>
+          <tr><th scope="row">שעה מקומית לפי אזור זמן</th><td class="us">מ-GPS + ברירת מחדל</td><td>לא</td><td>בצד השרת</td><td>לא</td></tr>
+          <tr><th scope="row">שמות sidecar קטועים</th><td class="us">מטופל</td><td>issue פתוח #353</td><td>מטופל</td><td>—</td></tr>
+          <tr><th scope="row">אלבומים / כפילויות</th><td class="us">קיצור · עותק · מניפסט / hash תוכן</td><td>אותן אפשרויות / כן</td><td>בשרת</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tnote">הטבלה המלאה עם מקורות ב-<a href="https://github.com/itielbru/gphotos-takeout-organizer/blob/main/README.he.md#איך-זה-משתווה">README</a>.</p>
+  </div>
+</section>
+
+<section class="close" aria-labelledby="h2-close">
+  <div class="inner">
+    <div>
+      <h2 id="h2-close">הגרסה הכנה</h2>
+      <p class="sub" style="margin-bottom:0">שלוש גרסאות, 190+ בדיקות אוטומטיות, CodeQL על כל שינוי, SBOM ו-SHA‑256 על כל הורדה. הבאג הראשון שדיווח זר תוקן ושוחרר תוך יום. זה גם פרויקט צעיר של אדם אחד. הנה מה זה אומר.</p>
+    </div>
+    <ul>
+      <li><b>Windows בלבד.</b> אין גרסה ל-macOS או Linux; ה-CLI ניתן להעברה, האשף לא.</li>
+      <li><b>installer לא חתום.</b> SmartScreen מזהיר בהרצה הראשונה עד שתגיע תעודת חתימה. לגרסה הניידת אותה הערה.</li>
+      <li><b>גיבוי — שלכם.</b> הכלי לא נוגע ב-ZIP וכותב לתיקייה חדשה, אבל dry-run קודם זה עדיין המהלך החכם.</li>
+      <li><b>קוד פתוח, MIT.</b> דיווחי באגים נענים; <a href="https://github.com/itielbru/gphotos-takeout-organizer/issues">issues</a> הם הדלת הקדמית.</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span>© איתיאל ברו · אין קשר לגוגל.</span>
+  <nav aria-label="קישורים">
+    <a href="https://github.com/itielbru/gphotos-takeout-organizer">קוד מקור</a>
+    <a href="https://github.com/itielbru/gphotos-takeout-organizer/releases">גרסאות</a>
+    <a href="../README.he">README</a>
+    <a href="../SECURITY">אבטחה ופרטיות</a>
+    <a href="../" lang="en">English</a>
+  </nav>
+</footer>
+
+</div>
+<script src="../docs/assets/landing.js" defer></script>
+</body>
+</html>
