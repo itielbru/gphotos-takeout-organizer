@@ -9,10 +9,10 @@ lang: en
 plugins:
   - jekyll-relative-links
   - jekyll-seo-tag
-# jekyll-readme-index ships in the github-pages gem and runs even when it is not
-# listed above; left enabled it claims README.md and /README 404s.
-readme_index:
-  enabled: false
+# Note: README.md is served raw (text/markdown), not rendered — the readme_index
+# plugin inside the github-pages gem claims that filename and neither removing it
+# from `plugins` nor `readme_index: enabled: false` changes that. The landing page
+# links to the README on github.com instead. /README.he and /SECURITY render fine.
 
 relative_links:
   enabled: true
