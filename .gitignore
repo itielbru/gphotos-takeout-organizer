@@ -53,3 +53,7 @@ BundleArtifacts/
 # OS
 Thumbs.db
 .DS_Store
+
+# Impeccable design-skill working files (review captures, sidecar)
+.impeccable/
+.playwright-mcp/
