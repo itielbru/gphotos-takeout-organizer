@@ -12,6 +12,26 @@ send any data anywhere:
   `%LocalAppData%\GPhotosTakeout\logs\` and are never transmitted. If you hit a crash, you can
   attach that dump to a GitHub issue yourself.
 
+## Code signing policy
+
+Release binaries are built by the public [Release workflow](.github/workflows/release.yml)
+on GitHub Actions from a tagged commit on `main`; nothing is built or signed on a
+developer machine. Each release ships `SHA256SUMS.txt` alongside the artifacts.
+
+Free code signing is provided by [SignPath.io](https://about.signpath.io/), certificate by
+[SignPath Foundation](https://signpath.org/). Until that integration ships (tracked in
+[#41](https://github.com/itielbru/gphotos-takeout-organizer/issues/41)), releases are
+unsigned and Windows SmartScreen shows a warning on first run — see the README.
+
+**Team and roles** (all held by the maintainer, [@itielbru](https://github.com/itielbru)):
+
+- *Committers / authors* — direct commit access to this repository.
+- *Reviewers* — review external contributions before they are merged; every change to
+  `main` goes through a pull request with passing CI (enforced by a branch ruleset).
+- *Approvers* — authorize each signing request for a release build.
+
+**Privacy:** the signed software does not transmit any data; see *Privacy* above.
+
 ## Reporting a vulnerability
 
 Please report security issues **privately** rather than opening a public issue:
