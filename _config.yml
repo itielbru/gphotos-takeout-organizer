@@ -9,6 +9,11 @@ lang: en
 plugins:
   - jekyll-relative-links
   - jekyll-seo-tag
+# jekyll-readme-index ships in the github-pages gem and runs even when it is not
+# listed above; left enabled it claims README.md and /README 404s.
+readme_index:
+  enabled: false
+
 relative_links:
   enabled: true
   collections: false
