@@ -1,16 +1,14 @@
-# GitHub Pages: renders README.md as the site index (jekyll-readme-index) with
-# relative .md links rewritten (jekyll-relative-links). Nothing else to maintain.
+# GitHub Pages: index.html is the landing page; the Markdown files in the repo
+# root are served as rendered pages (/README, /README.he, /SECURITY) with
+# relative .md links rewritten (jekyll-relative-links).
 title: Google Photos Takeout Organizer
 description: Merge Google Photos Takeout metadata back into your photos — correct dates, timezones, duplicates, and albums. Windows wizard + CLI.
 theme: jekyll-theme-minimal
 show_downloads: false
 lang: en
 plugins:
-  - jekyll-readme-index
   - jekyll-relative-links
   - jekyll-seo-tag
-readme_index:
-  with_frontmatter: true
 relative_links:
   enabled: true
   collections: false
